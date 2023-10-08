@@ -71,10 +71,10 @@ class Enum:
     values: list[str]
 
     def __init__(self, dict:dict[str, Any]):
-        identifier = dict["identifier"]
-        tags = dict["tags"]
-        uid = dict["uid"]
-        values = [v["id"] for v in dict["values"]]
+        self.identifier = dict["identifier"]
+        self.tags = dict["tags"]
+        self.uid = dict["uid"]
+        self.values = [v["id"] for v in dict["values"]]
 
 
 class Defs:

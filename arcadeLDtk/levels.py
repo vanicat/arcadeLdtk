@@ -17,15 +17,13 @@ class TileInstance:
     alpha: float
     flip_x: bool
     flip_y: bool
-    flip_both: bool
     position: tuple[int, int]
     texture: arcade.Texture
 
     def __init__(self, dict:dict[str, Any], texture:TileSet):
         self.alpha = dict["a"]
-        self.flip_x = dict["f"] == 1
-        self.flip_y = dict["f"] == 2
-        self.flip_both = dict["f"] == 3
+        self.flip_x = dict["f"] == 1 or dict["f"] == 3
+        self.flip_y = dict["f"] == 2 or dict["f"] == 3
         x, y = dict["px"]
         self.position = (x, y)
         self.texture = texture[dict["t"]]
@@ -83,6 +81,8 @@ px_total_offset_x which contains the total offset value)"""
 px_total_offset_y which contains the total offset value)"""
     visible: bool
     """Layer instance visibility"""
+
+    _sprite_list: Optional[arcade.SpriteList]
         
 
     def __init__(self, dict:dict[str, Any], defs:Defs):
@@ -112,6 +112,34 @@ px_total_offset_y which contains the total offset value)"""
         self.px_offset_x = dict["pxOffsetX"]
         self.px_offset_y = dict["pxOffsetY"]
         self.visible = dict["visible"]
+
+    def sprite_list(self, regenerate: bool = False, **kwargs) -> arcade.SpriteList:
+        if not regenerate and self._sprite_list:
+            return self._sprite_list
+        elif self.auto_layer_tiles is not None:
+            tiles = self.auto_layer_tiles
+        elif self.grid_tiles is not None:
+            tiles = self.grid_tiles
+        else:
+            raise ValueError("this layer has no sprite")
+
+        self._sprite_list = arcade.SpriteList(**kwargs)
+        # TODO: enable option
+    
+        for t in tiles:
+            texture = t.texture
+            if t.flip_x:
+                texture = texture.flip_horizontally()
+            if t.flip_y:
+                texture = texture.flip_vertically()
+
+            # TODO: offset and scale
+            sprite = arcade.Sprite(texture, scale=1,
+                                   center_x=t.position[0], center_y=t.position[1])
+            self._sprite_list.append(sprite)
+
+        return self._sprite_list
+        
 
 
 class Level:
