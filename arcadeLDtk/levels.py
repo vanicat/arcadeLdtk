@@ -125,6 +125,10 @@ px_total_offset_y which contains the total offset value)"""
 
         self._sprite_list = arcade.SpriteList(**kwargs)
         # TODO: enable option
+
+        height = self.c_height * self.grid_size
+        offset_x = self.px_total_offset_x + self.grid_size/2
+        offset_y = height - self.px_total_offset_y - self.grid_size/2
     
         for t in tiles:
             texture = t.texture
@@ -135,7 +139,7 @@ px_total_offset_y which contains the total offset value)"""
 
             # TODO: offset and scale
             sprite = arcade.Sprite(texture, scale=1,
-                                   center_x=t.position[0], center_y=t.position[1])
+                                   center_x=offset_x + t.position[0], center_y=offset_y - t.position[1])
             self._sprite_list.append(sprite)
 
         return self._sprite_list
