@@ -124,7 +124,6 @@ px_total_offset_y which contains the total offset value)"""
             raise ValueError("this layer has no sprite")
 
         self._sprite_list = arcade.SpriteList(**kwargs)
-        # TODO: enable option
 
         height = self.c_height * self.grid_size
         offset_x = self.px_total_offset_x + self.grid_size/2
