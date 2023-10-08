@@ -82,7 +82,7 @@ px_total_offset_y which contains the total offset value)"""
     visible: bool
     """Layer instance visibility"""
 
-    _sprite_list: Optional[arcade.SpriteList]
+    _sprite_list: Optional[arcade.SpriteList] = None
         
 
     def __init__(self, dict:dict[str, Any], defs:Defs):
@@ -195,3 +195,9 @@ class Level:
 
         self.world_x = level["worldX"]
         self.world_y = level["worldY"]
+
+    def make_scene(self, regenerate=False):
+        scene = arcade.Scene()
+        for l in self.layers:
+            scene.add_sprite_list(l.identifier, sprite_list=l.sprite_list(regenerate=regenerate))
+        return scene
