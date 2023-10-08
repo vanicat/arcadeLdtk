@@ -113,7 +113,7 @@ px_total_offset_y which contains the total offset value)"""
         self.px_offset_y = dict["pxOffsetY"]
         self.visible = dict["visible"]
 
-    def sprite_list(self, regenerate: bool = False, **kwargs) -> arcade.SpriteList:
+    def sprite_list(self, scale = 1, regenerate: bool = False, **kwargs) -> arcade.SpriteList:
         if not regenerate and self._sprite_list:
             return self._sprite_list
         elif self.auto_layer_tiles is not None:
@@ -137,8 +137,8 @@ px_total_offset_y which contains the total offset value)"""
                 texture = texture.flip_vertically()
 
             # TODO: offset and scale
-            sprite = arcade.Sprite(texture, scale=1,
-                                   center_x=offset_x + t.position[0], center_y=offset_y - t.position[1])
+            sprite = arcade.Sprite(texture, scale=scale,
+                                   center_x=(offset_x + t.position[0]) * scale, center_y= (offset_y - t.position[1]) * scale)
             self._sprite_list.append(sprite)
 
         return self._sprite_list
@@ -199,8 +199,8 @@ class Level:
         self.world_x = level["worldX"]
         self.world_y = level["worldY"]
 
-    def make_scene(self, regenerate=False):
+    def make_scene(self, scale=1, regenerate=False):
         scene = arcade.Scene()
         for l in self.layers:
-            scene.add_sprite_list(l.identifier, sprite_list=l.sprite_list(regenerate=regenerate))
+            scene.add_sprite_list(l.identifier, sprite_list=l.sprite_list(scale=scale, regenerate=regenerate))
         return scene
