@@ -6,9 +6,6 @@ import arcade
 from .defs import TileSet, Enum, Defs
 from .levels import Level, FieldInstance, TileInstance, LayerInstance, EntityInstance
 
-class Instance:
-    pass
-
 
 class LDtk:
     bg_color: arcade.types.Color
@@ -16,7 +13,7 @@ class LDtk:
     iid: str
     json_version: str
     levels: list[Level] | dict[tuple[int, int], Level]
-    toc: dict[str, list[Instance]]
+    toc: dict[str, Any] #TODO: typing
     world_grid_height: Optional[int]
     world_grid_widtht: Optional[int]
     world_layout: Optional[Literal["Free"] | Literal["GridVania"] | Literal["LinearHorizontal"] | Literal["LinearVertical"]]
