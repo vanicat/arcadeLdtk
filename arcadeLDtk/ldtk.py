@@ -30,7 +30,7 @@ class LDtk:
         
         self.iid = dict["iid"]
         self.json_version = dict["jsonVersion"]
-        self.levels = [Level(l, self.defs) for l in dict["levels"]]
+        self.levels = [Level(path, l, self.defs) for l in dict["levels"]]
 
         self.world_grid_height = dict["worldGridHeight"]
         self.world_grid_width = dict["worldGridWidth"]

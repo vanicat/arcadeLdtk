@@ -1,6 +1,7 @@
 from typing import Any, Literal, Optional
 import arcade
 from .defs import Defs, TileSet
+import os.path
 
 
 class FieldInstance:
@@ -201,7 +202,7 @@ class Level:
     world_x: int
     world_y: int
 
-    def __init__(self, level:dict, defs:Defs) -> None:
+    def __init__(self, path:str, level:dict, defs:Defs) -> None:
         self.level = level
 
         if level["externalRelPath"] is not None:
@@ -214,7 +215,7 @@ class Level:
         if level["bgRelPath"] is None:
             self.bg_texture = None
         else: #TODO: correct path
-            self.bg_texture = arcade.load_texture(level["bgRelPath"])
+            self.bg_texture = arcade.load_texture(os.path.join(path, level["bgRelPath"]))
 
         # in true, not implemeted
         self.field_instances = [FieldInstance(f) for f in level["fieldInstances"]]
