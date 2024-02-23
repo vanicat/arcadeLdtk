@@ -22,8 +22,26 @@ class FieldInstance:
 
 
 class EntityInstance:
-    def __init__(self, *args):
-        raise NotImplementedError("Entity not implemeted yet")
+    grid: tuple[int, int]
+    def_uid: int
+    tags: list[str]
+    fields: list[FieldInstance]
+    iid: str
+    world_x: Optional[int]
+    world_y: Optional[int]
+    px: tuple[int, int]
+
+    def __init__(self, dict:dict[str, Any]) -> None:
+        self.grid = (dict["__grid"][0], dict["__grid"][1])
+        self.def_uid = dict["defUid"] 
+        self.tags = dict["__tags"]
+        self.fields = [FieldInstance(f) for f in dict["fieldInstances"]]
+        self.iid = dict["iid"]
+        self.world_x = dict["__worldX"] if "__worldX" in dict else None
+        self.world_y = dict["__worldY"] if "__worldY" in dict else None
+        self.height = dict["height"]
+        self.width = dict["width"]
+        self.px = (dict["px"][0], dict["px"][1])
 
 
 class TileInstance:
@@ -118,8 +136,6 @@ px_total_offset_y which contains the total offset value)"""
             self.grid_tiles = [TileInstance(t, self.tileset) for t in dict["gridTiles"]]
 
         self.type = dict["__type"]
-        if dict["entityInstances"]:
-            raise NotImplementedError("entity Instance not implemeted yet")
         self.entity_instances = [EntityInstance(e) for e in dict["entityInstances"]]
         self.int_grid_csv = dict["intGridCsv"]
 
