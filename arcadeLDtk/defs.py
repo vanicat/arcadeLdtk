@@ -1,6 +1,7 @@
 
 import os
 from typing import Any, Optional
+from typing import TypedDict
 import arcade
 
 
@@ -56,7 +57,7 @@ class TileSet:
         self.source_enum_id = ts["tagsSourceEnumUid"]
         self.enum_tag = { obj["enumValueId"]: obj["tileIds"] for obj in ts["enumTags"]}       
 
-        self.identifier = ts["identifier"]
+        self.identifier = ts["identifier"] # TODO: allow user to find tileset by identifier
 
         self.tags = ts["tags"]
 
@@ -77,10 +78,49 @@ class Enum:
         self.values = [v["id"] for v in dict["values"]]
 
 
+class TileRect(TypedDict):
+    tilesetUid: int
+    x: int
+    y: int
+    h: int
+    w: int
+
+
+class EntityDefinition:
+    uid: int
+    identifier: str
+    color: arcade.types.Color
+    height: int
+    width: int
+    nine_slice_borders: Optional[tuple[int, int, int, int]]
+    pivot_x: float
+    pivot_y: float
+    tileset_id: int
+    tile_rect: Optional[TileRect]
+    tile_render_mode: str #TODO: may be use the list from the docs
+    ui_tile_rect: Optional[TileRect]
+
+    def __init__(self, ts:dict[str, Any]) -> None:
+        self.uid = ts["uid"]
+        self.identifier = ts["identifier"]
+        self.color = ts["color"]
+        self.height = ts["height"]
+        self.width = ts["width"]
+        self.nine_slice_borders = ts["nineSliceBorders"]
+        self.pivot_x = ts["pivotX"]
+        self.pivot_y = ts["pivotY"]
+        #TODO: read the arcade texture from the tileset
+        self.tileset_id = ts["tilesetId"] 
+        self.tile_rect = ts["tileRect"]
+        self.tile_render_mode = ts["tileRenderMode"]
+        self.ui_tile_rect = ts["uiTileRect"]
+
+
 class Defs:
     tilesets : dict[int, TileSet]
     """a dict from uid to tilesets"""
     enums: dict[int, Enum]
+    entities: dict[int, EntityDefinition]
     def __init__(self, path:str, dict:dict[str, Any]) -> None:
         self.tilesets = { }
         for ts in dict["tilesets"]:
@@ -89,8 +129,14 @@ class Defs:
                 continue
             tileset = TileSet(path, ts)
             self.tilesets[tileset.uid] = tileset
+
         self.enums = {}
         for en in dict["enums"]:
             enum = Enum(en)
             self.enums[enum.uid] = enum
+        
+        self.entities = {}
+        for ent in dict["entities"]:
+            entity = EntityDefinition(ent)
+            self.entities[entity.uid] = entity
 
