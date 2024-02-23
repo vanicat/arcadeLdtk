@@ -84,6 +84,9 @@ class Defs:
     def __init__(self, path:str, dict:dict[str, Any]) -> None:
         self.tilesets = { }
         for ts in dict["tilesets"]:
+            if "identifier" in ts and ts["identifier"] == 'Internal_Icons':
+                print("Internal_Icons are not implemeted")
+                continue
             tileset = TileSet(path, ts)
             self.tilesets[tileset.uid] = tileset
         self.enums = {}
