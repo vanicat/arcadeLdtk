@@ -102,7 +102,7 @@ px_total_offset_y which contains the total offset value)"""
         else:
             self.tileset = defs.tilesets[tileset_uid]
             self.auto_layer_tiles = [TileInstance(t, self.tileset) for t in dict["autoLayerTiles"]]
-            self.grid_tiles = self.auto_layer_tiles
+            self.grid_tiles = [TileInstance(t, self.tileset) for t in dict["gridTiles"]]
 
         self.type = dict["__type"]
         if dict["entityInstances"]:
