@@ -95,14 +95,19 @@ px_total_offset_y which contains the total offset value)"""
         self.px_total_offset_y = dict["__pxTotalOffsetY"]
         
         tileset_uid = dict["__tilesetDefUid"]
-        self.tileset = defs.tilesets[tileset_uid]
+        if tileset_uid is None:
+            self.tileset = None
+            self.auto_layer_tiles = None
+            self.grid_tiles = None
+        else:
+            self.tileset = defs.tilesets[tileset_uid]
+            self.auto_layer_tiles = [TileInstance(t, self.tileset) for t in dict["autoLayerTiles"]]
+            self.grid_tiles = self.auto_layer_tiles
 
         self.type = dict["__type"]
-        self.auto_layer_tiles = [TileInstance(t, self.tileset) for t in dict["autoLayerTiles"]]
         if dict["entityInstances"]:
             raise NotImplementedError("entity Instance not implemeted yet")
         self.entity_instances = [EntityInstance(e) for e in dict["entityInstances"]]
-        self.grid_tiles = self.auto_layer_tiles = [TileInstance(t, self.tileset) for t in dict["autoLayerTiles"]]
         self.int_grid_csv = dict["intGridCsv"]
 
         self.iid = dict["iid"]
