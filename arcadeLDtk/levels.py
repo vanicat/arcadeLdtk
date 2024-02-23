@@ -7,15 +7,18 @@ class FieldInstance:
     def __init__(self, dict:dict[str, Any]) -> None:
         self.identifier = dict["__identifier"]
         self.type = dict["__type"]
-        match self.type:
-            case "Color":
-                self.value = arcade.types.Color.from_hex_string(dict["__value"])
-            case "Point":
-                self.value = (dict["__value"]["cx"], dict["__value"]["cy"])
-            # case "EntityRef": #TODO: something to load the value later
+        if dict["__value"] is None:
+            self.value = None
+        else:
+            match self.type:
+                case "Color":
+                    self.value = arcade.types.Color.from_hex_string(dict["__value"])
+                case "Point":
+                    self.value = (dict["__value"]["cx"], dict["__value"]["cy"])
+                # case "EntityRef": #TODO: something to load the value later
 
-            case _:
-                self.value = dict["__value"]
+                case _:
+                    self.value = dict["__value"]
 
 
 class EntityInstance:
