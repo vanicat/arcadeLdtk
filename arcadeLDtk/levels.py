@@ -4,8 +4,18 @@ from .defs import Defs, TileSet
 
 
 class FieldInstance:
-    def __init__(self, *args) -> None:
-        raise NotImplementedError("cannot read field instance yet")
+    def __init__(self, dict:dict[str, Any]) -> None:
+        self.identifier = dict["__identifier"]
+        self.type = dict["__type"]
+        match self.type:
+            case "Color":
+                self.value = arcade.types.Color.from_hex_string(dict["__value"])
+            case "Point":
+                self.value = (dict["__value"]["cx"], dict["__value"]["cy"])
+            # case "EntityRef": #TODO: something to load the value later
+
+            case _:
+                self.value = dict["__value"]
 
 
 class EntityInstance:
