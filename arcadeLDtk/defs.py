@@ -7,7 +7,7 @@ import arcade
 def read_tilesets(path:str, tileset:dict) -> list[arcade.Texture]:
     assert tileset["relPath"], "tileset has no path"
     
-    sheet_path = os.path.join(tileset["relPath"], path)
+    sheet_path = os.path.join(path, tileset["relPath"])
     c_hei = tileset["__cHei"]
     c_wid = tileset["__cWid"]
     nb = c_hei * c_wid
