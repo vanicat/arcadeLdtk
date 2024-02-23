@@ -9,14 +9,14 @@ samples = [
     "AutoLayers_4_Assistant.ldtk",
     "AutoLayers_5_Advanced.ldtk", 
     "AutoLayers_6_OptionalRules.ldtk",
-    # "AutoLayers_7_Biomes.ldtk", # cannot read field instance yet
-    # "Entities.ldtk", # entity Instance not implemeted yet
+    "AutoLayers_7_Biomes.ldtk",
+    "Entities.ldtk",
     # "SeparateLevelFiles.ldtk", # external levels are not implemented
-    # "Test_file_for_API_showing_all_features.ldtk", # entity Instance not implemeted yet
-    # "Typical_2D_platformer_example.ldtk", # entity Instance not implemeted yet
-    # "Typical_TopDown_example.ldtk", # entity Instance not implemeted yet
+    # "Test_file_for_API_showing_all_features.ldtk", # file acces problem
+    "Typical_2D_platformer_example.ldtk", # entity Instance not implemeted yet
+    "Typical_TopDown_example.ldtk", # entity Instance not implemeted yet
     # "WorldMap_Free_layout.ldtk", # PIL doesn't know about aseprite
-    # "WorldMap_GridVania_layout.ldtk", # cannot read field instance yet
+    "WorldMap_GridVania_layout.ldtk", # cannot read field instance yet
 ]
 
 def test_load_sample():
