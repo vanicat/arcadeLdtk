@@ -32,11 +32,6 @@ class LDtk:
         self.iid = dict["iid"]
         self.json_version = dict["jsonVersion"]
         self.levels = [Level(l, self.defs) for l in dict["levels"]]
-        
-        if dict["toc"]:
-            raise NotImplementedError("toc is not implemented")
-        
-        self.toc = {}
 
         self.world_grid_height = dict["worldGridHeight"]
         self.world_grid_width = dict["worldGridWidth"]
@@ -46,6 +41,10 @@ class LDtk:
             raise NotImplementedError("multi world is not implemented yet")
         
         self.world = None
+        
+        self.toc = {
+            elem["identifier"]: elem for elem in dict["toc"]
+        }
 
 def read_LDtk(path):
     directory = os.path.dirname(path)
