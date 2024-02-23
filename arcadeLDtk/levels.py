@@ -213,8 +213,8 @@ class Level:
          
         if level["bgRelPath"] is None:
             self.bg_texture = None
-        else:
-            self.bg_texture = arcade.load_texture(level["bg_rel_path"])
+        else: #TODO: correct path
+            self.bg_texture = arcade.load_texture(level["bgRelPath"])
 
         # in true, not implemeted
         self.field_instances = [FieldInstance(f) for f in level["fieldInstances"]]
