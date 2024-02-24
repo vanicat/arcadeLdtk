@@ -85,7 +85,7 @@ class Enum:
     uid: int
     values: list[str]
 
-    def __init__(self, dict:dict[str, Any]):
+    def __init__(self, dict:dict[str, Any]) -> None:
         self.identifier = dict["identifier"]
         self.tags = dict["tags"]
         self.uid = dict["uid"]
@@ -131,6 +131,7 @@ class Defs:
     """a dict from uid to tilesets"""
     enums: dict[int, Enum]
     entities: dict[int, EntityDefinition]
+
     def __init__(self, path:str, dict:dict[str, Any]) -> None:
         self.tilesets = { }
         for ts in dict["tilesets"]:

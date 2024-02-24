@@ -52,7 +52,7 @@ class TileInstance:
     position: tuple[int, int]
     texture: arcade.Texture
 
-    def __init__(self, dict:dict[str, Any], texture:TileSet):
+    def __init__(self, dict:dict[str, Any], texture:TileSet) -> None:
         self.alpha = dict["a"]
         self.flip_x = dict["f"] == 1 or dict["f"] == 3
         self.flip_y = dict["f"] == 2 or dict["f"] == 3
@@ -117,7 +117,7 @@ px_total_offset_y which contains the total offset value)"""
     _sprite_list: Optional[arcade.SpriteList] = None
         
 
-    def __init__(self, dict:dict[str, Any], defs:Defs):
+    def __init__(self, dict:dict[str, Any], defs:Defs) -> None:
         self.c_height = dict["__cHei"]
         self.c_width = dict["__cWid"]
         self.grid_size = dict["__gridSize"]
@@ -234,7 +234,7 @@ class Level:
         self.world_x = level["worldX"]
         self.world_y = level["worldY"]
 
-    def make_scene(self, scale=1, regenerate=False):
+    def make_scene(self, scale=1, regenerate=False) -> arcade.Scene:
         scene = arcade.Scene()
         for l in self.layers:
             scene.add_sprite_list(l.identifier, sprite_list=l.sprite_list(scale=scale, regenerate=regenerate))
