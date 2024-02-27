@@ -239,3 +239,8 @@ class Level:
         for l in self.layers:
             scene.add_sprite_list(l.identifier, sprite_list=l.sprite_list(scale=scale, regenerate=regenerate))
         return scene
+    
+    def convert_coord(self, x:float, y:float, scale:float) -> tuple[float, float]:
+        """Convert coord to arcade convention
+        (0, 0) is at bottom left for aracade!"""
+        return (x * scale, (self.height - y) * scale)
