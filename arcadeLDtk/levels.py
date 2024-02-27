@@ -224,7 +224,7 @@ class Level:
         self.iid = level["iid"]
         self.uid = level["uid"]
 
-        # TODO
+        # TODO: convert here ?
         self.layers = [LayerInstance(l, defs) for l in level["layerInstances"]]
 
         self.height = level["pxHei"]
