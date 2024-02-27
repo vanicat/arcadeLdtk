@@ -125,7 +125,7 @@ px_total_offset_y which contains the total offset value)"""
         self.identifier = dict["__identifier"]
         self.opacity = dict["__opacity"]
         self.px_total_offset_x = dict["__pxTotalOffsetX"]
-        self.px_total_offset_y = -dict["__pxTotalOffsetY"] # convert ?
+        self.px_total_offset_y = -dict["__pxTotalOffsetY"]
         
         tileset_uid = dict["__tilesetDefUid"]
         if tileset_uid is None:
@@ -168,8 +168,11 @@ px_total_offset_y which contains the total offset value)"""
             if t.flip_y:
                 texture = texture.flip_vertically()
 
-            # TODO: offset
-            sprite = arcade.Sprite(texture, center_x=t.position[0] + self.grid_size/2, center_y=t.position[1] - self.grid_size/2)
+            sprite = arcade.Sprite(
+                texture,
+                center_x=t.position[0] + self.grid_size/2 + self.px_total_offset_x,
+                center_y=t.position[1] - self.grid_size/2 + self.px_total_offset_y
+            )
             self._sprite_list.append(sprite)
 
         return self._sprite_list
