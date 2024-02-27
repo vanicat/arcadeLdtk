@@ -206,7 +206,7 @@ class Level:
         self.level = level
 
         if level["externalRelPath"] is not None:
-            raise NotImplementedError("Save leves separately is not implemeted")
+            raise NotImplementedError("Save level separately is not implemeted")
         
         self.bg_color = arcade.types.Color.from_hex_string(level["__bgColor"])
 
