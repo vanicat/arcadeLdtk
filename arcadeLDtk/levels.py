@@ -1,11 +1,12 @@
-from typing import Any, Literal, Optional
+from typing import Any, Callable, Literal, Optional
 import arcade
 from .defs import Defs, TileSet
 import os.path
 
+Converter = Callable[[float, float, float], tuple[float, float]]
 
 class FieldInstance:
-    def __init__(self, dict:dict[str, Any]) -> None:
+    def __init__(self, dict:dict[str, Any], converter:Converter) -> None:
         self.identifier = dict["__identifier"]
         self.type = dict["__type"]
         if dict["__value"] is None:
@@ -15,7 +16,7 @@ class FieldInstance:
                 case "Color":
                     self.value = arcade.types.Color.from_hex_string(dict["__value"])
                 case "Point":
-                    self.value = (dict["__value"]["cx"], dict["__value"]["cy"])
+                    self.value = converter(dict["__value"]["cx"], dict["__value"]["cy"], 1)
                 # case "EntityRef": #TODO: something to load the value later
 
                 case _:
@@ -30,33 +31,33 @@ class EntityInstance:
     iid: str
     world_x: Optional[int]
     world_y: Optional[int]
-    px: tuple[int, int]
+    px: tuple[float, float]
 
-    def __init__(self, dict:dict[str, Any]) -> None:
+    def __init__(self, dict:dict[str, Any], converter:Converter) -> None:
         self.grid = (dict["__grid"][0], dict["__grid"][1])
         self.def_uid = dict["defUid"] 
         self.tags = dict["__tags"]
-        self.fields = [FieldInstance(f) for f in dict["fieldInstances"]]
+        self.fields = [FieldInstance(f, converter) for f in dict["fieldInstances"]]
         self.iid = dict["iid"]
         self.world_x = dict["__worldX"] if "__worldX" in dict else None
         self.world_y = dict["__worldY"] if "__worldY" in dict else None
         self.height = dict["height"]
         self.width = dict["width"]
-        self.px = (dict["px"][0], dict["px"][1])
+        self.px = converter(dict["px"][0], dict["px"][1], 1)
 
 
 class TileInstance:
     alpha: float
     flip_x: bool
     flip_y: bool
-    position: tuple[int, int]
+    position: tuple[float, float]
     texture: arcade.Texture
 
-    def __init__(self, dict:dict[str, Any], texture:TileSet) -> None:
+    def __init__(self, dict:dict[str, Any], texture:TileSet, converter:Converter) -> None:
         self.alpha = dict["a"]
         self.flip_x = dict["f"] == 1 or dict["f"] == 3
         self.flip_y = dict["f"] == 2 or dict["f"] == 3
-        x, y = dict["px"]
+        x, y = converter(dict["px"][0], dict["px"][1], 1)
         self.position = (x, y)
         self.texture = texture[dict["t"]]
 
@@ -117,14 +118,14 @@ px_total_offset_y which contains the total offset value)"""
     _sprite_list: Optional[arcade.SpriteList] = None
         
 
-    def __init__(self, dict:dict[str, Any], defs:Defs) -> None:
+    def __init__(self, dict:dict[str, Any], defs:Defs, converter:Converter) -> None:
         self.c_height = dict["__cHei"]
         self.c_width = dict["__cWid"]
         self.grid_size = dict["__gridSize"]
         self.identifier = dict["__identifier"]
         self.opacity = dict["__opacity"]
         self.px_total_offset_x = dict["__pxTotalOffsetX"]
-        self.px_total_offset_y = dict["__pxTotalOffsetY"]
+        self.px_total_offset_y = -dict["__pxTotalOffsetY"] # convert ?
         
         tileset_uid = dict["__tilesetDefUid"]
         if tileset_uid is None:
@@ -133,11 +134,11 @@ px_total_offset_y which contains the total offset value)"""
             self.grid_tiles = None
         else:
             self.tileset = defs.tilesets[tileset_uid]
-            self.auto_layer_tiles = [TileInstance(t, self.tileset) for t in dict["autoLayerTiles"]]
-            self.grid_tiles = [TileInstance(t, self.tileset) for t in dict["gridTiles"]]
+            self.auto_layer_tiles = [TileInstance(t, self.tileset, converter) for t in dict["autoLayerTiles"]]
+            self.grid_tiles = [TileInstance(t, self.tileset, converter) for t in dict["gridTiles"]]
 
         self.type = dict["__type"]
-        self.entity_instances = [EntityInstance(e) for e in dict["entityInstances"]]
+        self.entity_instances = [EntityInstance(e, converter) for e in dict["entityInstances"]]
         self.int_grid_csv = dict["intGridCsv"]
 
         self.iid = dict["iid"]
@@ -145,10 +146,10 @@ px_total_offset_y which contains the total offset value)"""
         self.level_id = dict["levelId"]
         self.override_tileset_uid = dict["overrideTilesetUid"]
         self.px_offset_x = dict["pxOffsetX"]
-        self.px_offset_y = dict["pxOffsetY"]
+        self.px_offset_y = -dict["pxOffsetY"]
         self.visible = dict["visible"]
 
-    def sprite_list(self, scale = 1, regenerate: bool = False, **kwargs) -> arcade.SpriteList:
+    def sprite_list(self, regenerate: bool = False, **kwargs) -> arcade.SpriteList:
         if not regenerate and self._sprite_list:
             return self._sprite_list
         elif self.auto_layer_tiles is not None:
@@ -159,10 +160,6 @@ px_total_offset_y which contains the total offset value)"""
             raise ValueError("this layer has no sprite")
 
         self._sprite_list = arcade.SpriteList(**kwargs)
-
-        height = self.c_height * self.grid_size
-        offset_x = self.px_total_offset_x + self.grid_size/2
-        offset_y = height - self.px_total_offset_y - self.grid_size/2
     
         for t in tiles:
             texture = t.texture
@@ -172,8 +169,7 @@ px_total_offset_y which contains the total offset value)"""
                 texture = texture.flip_vertically()
 
             # TODO: offset and scale
-            sprite = arcade.Sprite(texture, scale=scale,
-                                   center_x=(offset_x + t.position[0]) * scale, center_y= (offset_y - t.position[1]) * scale)
+            sprite = arcade.Sprite(texture, center_x=t.position[0] + self.grid_size/2, center_y=t.position[1] - self.grid_size/2)
             self._sprite_list.append(sprite)
 
         return self._sprite_list
@@ -205,32 +201,40 @@ class Level:
     def __init__(self, path:str, level:dict, defs:Defs) -> None:
         self.level = level
 
+        # set height and width first to be able to convert in init
+        self.height = level["pxHei"]
+        self.width = level["pxWid"]
+
         if level["externalRelPath"] is not None:
             raise NotImplementedError("Save level separately is not implemeted")
         
         self.bg_color = arcade.types.Color.from_hex_string(level["__bgColor"])
 
-        self.bg_pos = level["__bgPos"]
+        if level["__bgPos"] is None:
+            self.bg_pos = None
+        else:
+            self.bg_pos = level["__bgPos"]
+            # crop_x, crop_y, crop_width, crop_height = level["__bgPos"]["cropRect"]
+            # scale_x, scale_y = level["__bgPos"]["scale"]
+            topLeft_x, topLeft_y = level["__bgPos"]["topLeftPx"]
+            self.bg_pos["topLeftPx"] =  self.convert_coord(topLeft_x, topLeft_y, 1)
          
         if level["bgRelPath"] is None:
             self.bg_texture = None
-        else: #TODO: correct path
+        else:
             self.bg_texture = arcade.load_texture(os.path.join(path, level["bgRelPath"]))
 
         # in true, not implemeted
-        self.field_instances = [FieldInstance(f) for f in level["fieldInstances"]]
+        self.field_instances = [FieldInstance(f, self.convert_coord) for f in level["fieldInstances"]]
 
         self.identifier = level["identifier"]
         self.iid = level["iid"]
         self.uid = level["uid"]
 
+        self.layers = [LayerInstance(l, defs, self.convert_coord) for l in level["layerInstances"]]
+
         # TODO: convert here ?
-        self.layers = [LayerInstance(l, defs) for l in level["layerInstances"]]
-
-        self.height = level["pxHei"]
-        self.width = level["pxWid"]
         self.world_depth = level["worldDepth"]
-
         self.world_x = level["worldX"]
         self.world_y = level["worldY"]
 
