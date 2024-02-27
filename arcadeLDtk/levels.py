@@ -3,7 +3,7 @@ import arcade
 from .defs import Defs, TileSet
 import os.path
 
-Converter = Callable[[float, float, float], tuple[float, float]]
+Converter = Callable[[float, float], tuple[float, float]]
 
 class FieldInstance:
     def __init__(self, dict:dict[str, Any], converter:Converter) -> None:
@@ -16,7 +16,7 @@ class FieldInstance:
                 case "Color":
                     self.value = arcade.types.Color.from_hex_string(dict["__value"])
                 case "Point":
-                    self.value = converter(dict["__value"]["cx"], dict["__value"]["cy"], 1)
+                    self.value = converter(dict["__value"]["cx"], dict["__value"]["cy"])
                 # case "EntityRef": #TODO: something to load the value later
 
                 case _:
@@ -43,7 +43,7 @@ class EntityInstance:
         self.world_y = dict["__worldY"] if "__worldY" in dict else None
         self.height = dict["height"]
         self.width = dict["width"]
-        self.px = converter(dict["px"][0], dict["px"][1], 1)
+        self.px = converter(dict["px"][0], dict["px"][1])
 
 
 class TileInstance:
@@ -57,7 +57,7 @@ class TileInstance:
         self.alpha = dict["a"]
         self.flip_x = dict["f"] == 1 or dict["f"] == 3
         self.flip_y = dict["f"] == 2 or dict["f"] == 3
-        x, y = converter(dict["px"][0], dict["px"][1], 1)
+        x, y = converter(dict["px"][0], dict["px"][1])
         self.position = (x, y)
         self.texture = texture[dict["t"]]
 
@@ -168,7 +168,7 @@ px_total_offset_y which contains the total offset value)"""
             if t.flip_y:
                 texture = texture.flip_vertically()
 
-            # TODO: offset and scale
+            # TODO: offset
             sprite = arcade.Sprite(texture, center_x=t.position[0] + self.grid_size/2, center_y=t.position[1] - self.grid_size/2)
             self._sprite_list.append(sprite)
 
@@ -217,7 +217,7 @@ class Level:
             # crop_x, crop_y, crop_width, crop_height = level["__bgPos"]["cropRect"]
             # scale_x, scale_y = level["__bgPos"]["scale"]
             topLeft_x, topLeft_y = level["__bgPos"]["topLeftPx"]
-            self.bg_pos["topLeftPx"] =  self.convert_coord(topLeft_x, topLeft_y, 1)
+            self.bg_pos["topLeftPx"] =  self.convert_coord(topLeft_x, topLeft_y)
          
         if level["bgRelPath"] is None:
             self.bg_texture = None
@@ -238,13 +238,13 @@ class Level:
         self.world_x = level["worldX"]
         self.world_y = level["worldY"]
 
-    def make_scene(self, scale=1, regenerate=False) -> arcade.Scene:
+    def make_scene(self, regenerate=False) -> arcade.Scene:
         scene = arcade.Scene()
         for l in self.layers:
-            scene.add_sprite_list(l.identifier, sprite_list=l.sprite_list(scale=scale, regenerate=regenerate))
+            scene.add_sprite_list(l.identifier, sprite_list=l.sprite_list(regenerate=regenerate))
         return scene
     
-    def convert_coord(self, x:float, y:float, scale:float) -> tuple[float, float]:
+    def convert_coord(self, x:float, y:float) -> tuple[float, float]:
         """Convert coord to arcade convention
         (0, 0) is at bottom left for aracade!"""
-        return (x * scale, (self.height - y) * scale)
+        return (x, (self.height - y))
