@@ -234,6 +234,7 @@ class Level:
     field_instances: dict[str,FieldInstance]
     layers: list[LayerInstance]
     layers_by_iid: dict[str, LayerInstance]
+    layers_by_identifier: dict[str, LayerInstance]
 
     identifier: str
     iid: str
@@ -279,6 +280,7 @@ class Level:
 
         self.layers = [LayerInstance(l, defs, self.convert_coord) for l in level["layerInstances"]]
         self.layers_by_iid = { l.iid:l for l in self.layers }
+        self.layers_by_identifier = { l.identifier:l for l in self.layers }
 
         # TODO: convert here ?
         self.world_depth = level["worldDepth"]
