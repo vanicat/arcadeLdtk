@@ -208,7 +208,7 @@ class Level:
 
     bg_texture: Optional[arcade.Texture]
 
-    #TODO: fieldInstances
+    field_instances: list[FieldInstance]
 
     identifier: str
     iid: str
