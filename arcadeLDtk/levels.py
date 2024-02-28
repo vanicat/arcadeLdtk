@@ -14,6 +14,10 @@ class EntityRef(TypedDict):
 
 
 class FieldInstance:
+    identifier: str
+    type: str
+    value: Any
+
     def __init__(self, dict:dict[str, Any], converter:Converter) -> None:
         self.identifier = dict["__identifier"]
         self.type = dict["__type"]
