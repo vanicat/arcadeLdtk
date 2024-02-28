@@ -165,6 +165,9 @@ px_total_offset_y which contains the total offset value)"""
         self.px_offset_y = -dict["pxOffsetY"]
         self.visible = dict["visible"]
 
+    def has_tiles(self) -> bool:
+        return self.auto_layer_tiles is not None or self.grid_tiles is not None
+
     def sprite_list(self, regenerate: bool = False, **kwargs) -> arcade.SpriteList:
         if not regenerate and self._sprite_list:
             return self._sprite_list
