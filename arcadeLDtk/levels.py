@@ -22,6 +22,9 @@ class FieldInstance:
                 case _:
                     self.value = dict["__value"]
 
+    def __str__(self) -> str:
+        return f"FieldInstance:(id: {self.identifier}, type: {self.type}, value: {self.value!r})"
+
 
 class EntityInstance:
     #TODO: convert
