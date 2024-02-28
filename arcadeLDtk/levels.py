@@ -1,9 +1,17 @@
-from typing import Any, Callable, Literal, Optional, Self
+from typing import Any, Callable, Literal, Optional, Self, TypedDict
 import arcade
 from .defs import Defs, TileSet
 import os.path
 
 Converter = Callable[[float, float], tuple[float, float]]
+
+
+class EntityRef(TypedDict):
+    entityIid: str
+    layerIid: str
+    levelIid: str
+    worldIid: str
+
 
 class FieldInstance:
     def __init__(self, dict:dict[str, Any], converter:Converter) -> None:
