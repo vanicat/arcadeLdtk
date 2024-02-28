@@ -263,7 +263,9 @@ class Level:
     def make_scene(self, regenerate=False) -> arcade.Scene:
         scene = arcade.Scene()
         for l in self.layers:
-            scene.add_sprite_list(l.identifier, sprite_list=l.sprite_list(regenerate=regenerate))
+            if l.has_tiles():
+                scene.add_sprite_list(l.identifier, sprite_list=l.sprite_list(regenerate=regenerate))
+
         return scene
     
     def convert_coord(self, x:float, y:float) -> tuple[float, float]:
