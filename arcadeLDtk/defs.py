@@ -84,12 +84,17 @@ class Enum:
     tags: list[str]
     uid: int
     values: list[str]
+    path: Optional[str]
 
     def __init__(self, dict:dict[str, Any]) -> None:
         self.identifier = dict["identifier"]
         self.tags = dict["tags"]
         self.uid = dict["uid"]
         self.values = [v["id"] for v in dict["values"]]
+        if "externalRelPath" in dict:
+            self.path = dict["externalRelPath"]
+        else:
+            self.path = None
 
 
 class EntityDefinition:
@@ -143,6 +148,10 @@ class Defs:
 
         self.enums = {}
         for en in dict["enums"]:
+            enum = Enum(en)
+            self.enums[enum.uid] = enum
+
+        for en in dict["externalEnums"]:
             enum = Enum(en)
             self.enums[enum.uid] = enum
         
