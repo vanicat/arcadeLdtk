@@ -132,7 +132,7 @@ all tiles behind opaque ones will be discarded.
 """
     entity_list: list[EntityInstance]
     entity_by_iid: dict[str, EntityInstance]
-    entity_by_identifier: dict[str, EntityInstance]
+    entity_by_identifier: dict[str, list[EntityInstance]]
     grid_tiles: Optional[list[TileInstance]]
     iid: str 
     """Unique layer instance identifier"""
@@ -183,7 +183,11 @@ px_total_offset_y which contains the total offset value)"""
         self.type = dict["__type"]
         self.entity_list = [EntityInstance(e, converter) for e in dict["entityInstances"]]
         self.entity_by_iid = { e.iid: e for e in self.entity_list }
-        self.entity_by_identifier = { e.identifier: e for e in self.entity_list }
+        self.entity_by_identifier = {}
+        for e in self.entity_list:
+            elem = self.entity_by_identifier.setdefault(e.identifier, [])
+            elem.append(e)
+
         self.int_grid_csv = dict["intGridCsv"]
 
         self.iid = dict["iid"]
