@@ -50,6 +50,8 @@ class FieldInstance:
 
 class EntityInstance:
     #TODO: convert
+    identifier: str
+    "Entity definition identifier"
     grid: tuple[int, int]
     "Grid-based coordinates "
     def_uid: int
@@ -77,6 +79,7 @@ class EntityInstance:
         self.tags = dict["__tags"]
         self.fields = FieldInstance.build_instance_dict(dict["fieldInstances"], converter)
         self.iid = dict["iid"]
+        self.identifier = dict["__identifier"]
         self.world_x = dict["__worldX"] if "__worldX" in dict else None
         self.world_y = dict["__worldY"] if "__worldY" in dict else None
         self.height = dict["height"]
@@ -129,6 +132,7 @@ all tiles behind opaque ones will be discarded.
 """
     entity_list: list[EntityInstance]
     entity_by_iid: dict[str, EntityInstance]
+    entity_by_identifier: dict[str, EntityInstance]
     grid_tiles: Optional[list[TileInstance]]
     iid: str 
     """Unique layer instance identifier"""
@@ -179,6 +183,7 @@ px_total_offset_y which contains the total offset value)"""
         self.type = dict["__type"]
         self.entity_list = [EntityInstance(e, converter) for e in dict["entityInstances"]]
         self.entity_by_iid = { e.iid: e for e in self.entity_list }
+        self.entity_by_identifier = { e.identifier: e for e in self.entity_list }
         self.int_grid_csv = dict["intGridCsv"]
 
         self.iid = dict["iid"]
