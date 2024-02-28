@@ -24,14 +24,27 @@ class FieldInstance:
 
 
 class EntityInstance:
+    #TODO: convert
     grid: tuple[int, int]
+    "Grid-based coordinates "
     def_uid: int
+    "Reference of the Entity definition UID"
     tags: list[str]
+    "Array of tags defined in this Entity definition"
     fields: list[FieldInstance]
+    "An array of all custom fields and their values."
     iid: str
+    "Unique instance identifier"
     world_x: Optional[int]
+    "X world coordinate in pixels. Only available in GridVania or Free world layouts."
     world_y: Optional[int]
+    "Y world coordinate in pixels Only available in GridVania or Free world layouts."
     px: tuple[float, float]
+    "Pixel coordinates ([x,y] format) in current level coordinate space. Don't forget optional layer offsets, if they exist!"
+    height: int
+    "Entity height in pixels. For non-resizable entities, it will be the same as Entity definition."
+    width: int
+    "Entity width in pixels. For non-resizable entities, it will be the same as Entity definition."
 
     def __init__(self, dict:dict[str, Any], converter:Converter) -> None:
         self.grid = (dict["__grid"][0], dict["__grid"][1])
