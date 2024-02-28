@@ -18,7 +18,8 @@ class FieldInstance:
                 case "Point":
                     self.value = converter(dict["__value"]["cx"], dict["__value"]["cy"])
                 # case "EntityRef": #TODO: something to load the value later
-
+                case "Array<Point>":
+                    self.value = [converter(pt["cx"], pt["cy"]) for pt in dict["__value"]]
                 case _:
                     self.value = dict["__value"]
 

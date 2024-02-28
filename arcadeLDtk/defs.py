@@ -132,10 +132,11 @@ class EntityDefinition:
 
 
 class Defs:
-    tilesets : dict[int, TileSet]
+    tilesets : dict[int|str, TileSet]
     """a dict from uid to tilesets"""
-    enums: dict[int, Enum]
-    entities: dict[int, EntityDefinition]
+    enums: dict[int|str, Enum]
+    """merge of enums and externalenums"""
+    entities: dict[int|str, EntityDefinition]
 
     def __init__(self, path:str, dict:dict[str, Any]) -> None:
         self.tilesets = { }
@@ -145,20 +146,24 @@ class Defs:
                 continue
             tileset = TileSet(path, ts)
             self.tilesets[tileset.uid] = tileset
+            self.tilesets[tileset.identifier] = tileset
 
         self.enums = {}
         for en in dict["enums"]:
             enum = Enum(en)
             self.enums[enum.uid] = enum
+            self.enums[enum.identifier] = enum
 
         for en in dict["externalEnums"]:
             enum = Enum(en)
             self.enums[enum.uid] = enum
-        
+            self.enums[enum.identifier] = enum
+
         self.entities = {}
         for ent in dict["entities"]:
             entity = EntityDefinition(ent, self)
             self.entities[entity.uid] = entity
+            self.entities[entity.identifier] = entity
 
     def get_texture(self, rect:TileRect) -> Optional[arcade.Texture]:
         if rect["tilesetUid"] in self.tilesets:
