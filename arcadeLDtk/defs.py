@@ -122,7 +122,6 @@ class EntityDefinition:
         self.nine_slice_borders = ts["nineSliceBorders"]
         self.pivot_x = ts["pivotX"]
         self.pivot_y = ts["pivotY"]
-        #TODO: read the arcade texture from the tileset
         self.tileset_id = ts["tilesetId"] 
         self.tile_rect = ts["tileRect"]
         self.tile = defs.get_texture(self.tile_rect) if self.tile_rect else None
