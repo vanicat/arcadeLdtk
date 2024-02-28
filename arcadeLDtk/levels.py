@@ -25,7 +25,6 @@ class FieldInstance:
                     self.value = arcade.types.Color.from_hex_string(dict["__value"])
                 case "Point":
                     self.value = converter(dict["__value"]["cx"], dict["__value"]["cy"])
-                # case "EntityRef": #TODO: something to load the value later
                 case "Array<Point>":
                     self.value = [converter(pt["cx"], pt["cy"]) for pt in dict["__value"]]
                 case _:
@@ -124,7 +123,8 @@ The array is already sorted in display order
 Note: if multiple tiles are stacked in the same cell as the result of different rules,
 all tiles behind opaque ones will be discarded.
 """
-    entity_instances: Optional[list[EntityInstance]]
+    entity_list: list[EntityInstance]
+    entity_by_iid: dict[str, EntityInstance]
     grid_tiles: Optional[list[TileInstance]]
     iid: str 
     """Unique layer instance identifier"""
@@ -173,7 +173,8 @@ px_total_offset_y which contains the total offset value)"""
             self.grid_tiles = [TileInstance(t, self.tileset, converter) for t in dict["gridTiles"]]
 
         self.type = dict["__type"]
-        self.entity_instances = [EntityInstance(e, converter) for e in dict["entityInstances"]]
+        self.entity_list = [EntityInstance(e, converter) for e in dict["entityInstances"]]
+        self.entity_by_iid = { e.iid: e for e in self.entity_list }
         self.int_grid_csv = dict["intGridCsv"]
 
         self.iid = dict["iid"]
@@ -223,11 +224,12 @@ class Level:
     bg_pos: Optional[dict[str, Any]]
     """TODO: convert to something arcade use"""
 
-    #TODO: __neighbours
 
     bg_texture: Optional[arcade.Texture]
 
     field_instances: dict[str,FieldInstance]
+    layers: list[LayerInstance]
+    layers_by_iid: dict[str, LayerInstance]
 
     identifier: str
     iid: str
@@ -272,6 +274,7 @@ class Level:
         self.uid = level["uid"]
 
         self.layers = [LayerInstance(l, defs, self.convert_coord) for l in level["layerInstances"]]
+        self.layers_by_iid = { l.iid:l for l in self.layers }
 
         # TODO: convert here ?
         self.world_depth = level["worldDepth"]

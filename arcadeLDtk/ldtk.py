@@ -5,7 +5,7 @@ import os.path
 
 import arcade
 
-from .levels import Level
+from .levels import Level, EntityRef, EntityInstance
 from .defs import Defs
 
 
@@ -14,12 +14,17 @@ class LDtk:
     defs: Defs
     iid: str
     json_version: str
-    levels: list[Level] | dict[tuple[int, int], Level]
+    levels: list[Level]# | dict[tuple[int, int], Level]
+    levels_by_iid: dict[str, Level]
     toc: dict[str, Any] #TODO: typing
     world_grid_height: Optional[int]
     world_grid_widtht: Optional[int]
     world_layout: Optional[Literal["Free"] | Literal["GridVania"] | Literal["LinearHorizontal"] | Literal["LinearVertical"]]
     world: None
+
+    def get_entity(self, it:EntityRef) -> EntityInstance:
+        return self.levels_by_iid[it["levelIid"]].layers_by_iid[
+            it["layerIid"]].entity_by_iid[it["entityIid"]]
 
     def __init__(self, path:str, dict:dict[str, Any]) -> None:
         self.bg_color = arcade.types.Color.from_hex_string(dict["bgColor"])
@@ -31,6 +36,7 @@ class LDtk:
         self.iid = dict["iid"]
         self.json_version = dict["jsonVersion"]
         self.levels = [Level(path, l, self.defs) for l in dict["levels"]]
+        self.levels_by_iid = { l.iid: l for l in self.levels }
 
         self.world_grid_height = dict["worldGridHeight"]
         self.world_grid_width = dict["worldGridWidth"]
