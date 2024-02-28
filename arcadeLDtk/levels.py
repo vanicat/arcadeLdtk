@@ -1,4 +1,4 @@
-from typing import Any, Callable, Literal, Optional
+from typing import Any, Callable, Literal, Optional, Self
 import arcade
 from .defs import Defs, TileSet
 import os.path
@@ -24,6 +24,16 @@ class FieldInstance:
 
     def __str__(self) -> str:
         return f"FieldInstance:(id: {self.identifier}, type: {self.type}, value: {self.value!r})"
+    
+    @classmethod
+    def build_instance_dict(cls, di:dict, converter:Converter) -> dict[str, Self]:
+        fields:dict[str, Self] = {}
+        for f in di:
+            fi = cls(f, converter)
+            if fi.identifier in fields:
+                raise ValueError(f"{fi.identifier} is set twice")
+            fields[fi.identifier] = fi
+        return fields
 
 
 class EntityInstance:
@@ -34,7 +44,7 @@ class EntityInstance:
     "Reference of the Entity definition UID"
     tags: list[str]
     "Array of tags defined in this Entity definition"
-    fields: list[FieldInstance]
+    fields: dict[str, FieldInstance]
     "An array of all custom fields and their values."
     iid: str
     "Unique instance identifier"
@@ -53,7 +63,7 @@ class EntityInstance:
         self.grid = (dict["__grid"][0], dict["__grid"][1])
         self.def_uid = dict["defUid"] 
         self.tags = dict["__tags"]
-        self.fields = [FieldInstance(f, converter) for f in dict["fieldInstances"]]
+        self.fields = FieldInstance.build_instance_dict(dict["fieldInstances"], converter)
         self.iid = dict["iid"]
         self.world_x = dict["__worldX"] if "__worldX" in dict else None
         self.world_y = dict["__worldY"] if "__worldY" in dict else None
@@ -208,7 +218,7 @@ class Level:
 
     bg_texture: Optional[arcade.Texture]
 
-    field_instances: list[FieldInstance]
+    field_instances: dict[str,FieldInstance]
 
     identifier: str
     iid: str
@@ -246,8 +256,7 @@ class Level:
         else:
             self.bg_texture = arcade.load_texture(os.path.join(path, level["bgRelPath"]))
 
-        # in true, not implemeted
-        self.field_instances = [FieldInstance(f, self.convert_coord) for f in level["fieldInstances"]]
+        self.field_instances = FieldInstance.build_instance_dict(level["fieldInstances"], self.convert_coord)
 
         self.identifier = level["identifier"]
         self.iid = level["iid"]
