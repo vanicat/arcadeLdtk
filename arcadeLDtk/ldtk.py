@@ -5,7 +5,7 @@ import os.path
 
 import arcade
 
-from .levels import Level, EntityRef, EntityInstance
+from .levels import LayerInstance, Level, EntityRef, EntityInstance
 from .defs import Defs
 
 
@@ -22,9 +22,12 @@ class LDtk:
     world_layout: Optional[Literal["Free"] | Literal["GridVania"] | Literal["LinearHorizontal"] | Literal["LinearVertical"]]
     world: None
 
-    def get_entity(self, it:EntityRef) -> EntityInstance:
-        return self.levels_by_iid[it["levelIid"]].layers_by_iid[
-            it["layerIid"]].entity_by_iid[it["entityIid"]]
+
+    def get_entity(self, it:EntityRef) -> tuple[Level, LayerInstance, EntityInstance]:
+        level = self.levels_by_iid[it["levelIid"]]
+        layer = level.layers_by_iid[it["layerIid"]]
+        entity = layer.entity_by_iid[it["entityIid"]]
+        return level, layer, entity
 
     def __init__(self, path:str, dict:dict[str, Any]) -> None:
         self.bg_color = arcade.types.Color.from_hex_string(dict["bgColor"])
