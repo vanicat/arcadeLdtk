@@ -10,9 +10,6 @@ if TYPE_CHECKING:
 from .defs import Defs, EntityDefinition, TileSet
 
 
-Converter = Callable[[float, float], tuple[float, float]]
-
-
 class EntityRef(TypedDict):
     entityIid: str
     layerIid: str
@@ -28,7 +25,7 @@ class FieldInstance[T]:
     value: Any
 
     @classmethod
-    def from_json(cls, parent: T, dict:dict[str, Any], converter:Converter) -> Self:
+    def from_json(cls, parent: T, level: "Level", dict:dict[str, Any]) -> Self:
         identifier = dict["__identifier"]
         type = dict["__type"]
         if dict["__value"] is None:
@@ -38,9 +35,9 @@ class FieldInstance[T]:
                 case "Color":
                     value = arcade.types.Color.from_hex_string(dict["__value"])
                 case "Point":
-                    value = converter(dict["__value"]["cx"], dict["__value"]["cy"])
+                    value = level.convert_coord(dict["__value"]["cx"], dict["__value"]["cy"])
                 case "Array<Point>":
-                    value = [converter(pt["cx"], pt["cy"]) for pt in dict["__value"]]
+                    value = [level.contains_coord(pt["cx"], pt["cy"]) for pt in dict["__value"]]
                 case _:
                     value = dict["__value"]
 
@@ -51,10 +48,10 @@ class FieldInstance[T]:
         return f"FieldInstance:(id: {self.identifier}, type: {self.type}, value: {self.value!r})"
     
     @classmethod
-    def build_instance_dict(cls, parent:T, di:dict, converter:Converter) -> dict[str, Self]:
+    def build_instance_dict(cls, parent:T, level:"Level", di:dict) -> dict[str, Self]:
         fields:dict[str, Self] = {}
         for f in di:
-            fi = cls.from_json(parent, f, converter)
+            fi = cls.from_json(parent, level, f)
             if fi.identifier in fields:
                 raise ValueError(f"{fi.identifier} is set twice")
             fields[fi.identifier] = fi
@@ -91,10 +88,10 @@ class EntityInstance:
     "Entity width in pixels. For non-resizable entities, it will be the same as Entity definition."
 
     @classmethod
-    def from_json(cls, parent: "LayerInstance", dict:dict[str, Any], defs: "Defs", converter:Converter) -> Self:
+    def from_json(cls, parent: "LayerInstance", dict:dict[str, Any]) -> Self:
         grid = (dict["__grid"][0], dict["__grid"][1])
         def_uid = dict["defUid"] 
-        def_ = defs.entities[def_uid]
+        def_ = parent.parent.parent.defs.entities[def_uid]
         tags = dict["__tags"]
         iid = dict["iid"]
         identifier = dict["__identifier"]
@@ -102,11 +99,11 @@ class EntityInstance:
         world_y = dict["__worldY"] if "__worldY" in dict else None
         height = dict["height"]
         width = dict["width"]
-        px = converter(dict["px"][0], dict["px"][1])
+        px = parent.parent.convert_coord(dict["px"][0], dict["px"][1])
 
-        self = cls(parent, identifier, grid, def_uid, def_, tags, {}, iid, world_x, world_y, px, height, width)
-        self.fields = FieldInstance.build_instance_dict(self, dict["fieldInstances"], converter)
-        return self
+        new = cls(parent, identifier, grid, def_uid, def_, tags, {}, iid, world_x, world_y, px, height, width)
+        new.fields = FieldInstance.build_instance_dict(new, parent.parent, dict["fieldInstances"])
+        return new
 
 
 @dataclass(slots=True, frozen=True)
@@ -119,11 +116,11 @@ class TileInstance:
     texture: arcade.Texture
 
     @classmethod
-    def from_json(cls, parent:"LayerInstance", dict:dict[str, Any], tileSet:TileSet, converter:Converter) -> Self:
+    def from_json(cls, parent:"LayerInstance", dict:dict[str, Any], tileSet:TileSet) -> Self:
         alpha = dict["a"]
         flip_x = dict["f"] & 1 != 0
         flip_y = dict["f"] & 2 != 0
-        x, y = converter(dict["px"][0], dict["px"][1])
+        x, y = parent.parent.convert_coord(dict["px"][0], dict["px"][1])
         position = (x, y)
         texture = tileSet[dict["t"]]
         return cls(parent, alpha, flip_x, flip_y, position, texture)
@@ -189,7 +186,7 @@ px_total_offset_y which contains the total offset value)"""
     _sprite_list: Optional[arcade.SpriteList] = None
         
     @classmethod
-    def from_json(cls, parent: "Level", dict:dict[str, Any], defs:Defs, converter:Converter) -> Self:
+    def from_json(cls, parent: "Level", dict:dict[str, Any]) -> Self:
         new:Self = cls(
             parent = parent, 
             c_height = dict["__cHei"], 
@@ -218,11 +215,11 @@ px_total_offset_y which contains the total offset value)"""
 
         tileset_uid = dict["__tilesetDefUid"]
         if tileset_uid is not None:
-            new.tileset = defs.tilesets[tileset_uid]
-            new.auto_layer_tiles = [TileInstance.from_json(new, t, new.tileset, converter) for t in dict["autoLayerTiles"]]
-            new.grid_tiles = [TileInstance.from_json(new, t, new.tileset, converter) for t in dict["gridTiles"]]
+            new.tileset = parent.parent.defs.tilesets[tileset_uid]
+            new.auto_layer_tiles = [TileInstance.from_json(new, t, new.tileset) for t in dict["autoLayerTiles"]]
+            new.grid_tiles = [TileInstance.from_json(new, t, new.tileset) for t in dict["gridTiles"]]
 
-        new.entity_list = [EntityInstance.from_json(new, e, defs, converter) for e in dict["entityInstances"]]
+        new.entity_list = [EntityInstance.from_json(new, e) for e in dict["entityInstances"]]
         new.entity_by_iid = { e.iid: e for e in new.entity_list }
 
         for e in new.entity_list:
@@ -292,7 +289,7 @@ class Level:
     world_y: int
 
     @classmethod
-    def from_json(cls, parent: "LDtk", path:str, level:dict[str, Any], defs:Defs) -> Self:
+    def from_json(cls, parent: "LDtk", path:str, level:dict[str, Any]) -> Self:
         if level["externalRelPath"] is not None:
             raise NotImplementedError("Save level separately is not implemeted")
         
@@ -319,9 +316,9 @@ class Level:
         ) 
      
 
-        new.field_instances = FieldInstance.build_instance_dict(new, level["fieldInstances"], new.convert_coord)
+        new.field_instances = FieldInstance.build_instance_dict(new, new, level["fieldInstances"])
 
-        new.layers = [LayerInstance.from_json(new, l, defs, new.convert_coord) for l in level["layerInstances"]]
+        new.layers = [LayerInstance.from_json(new, l) for l in level["layerInstances"]]
         new.layers_by_iid = { l.iid:l for l in new.layers }
         new.layers_by_identifier = { l.identifier:l for l in new.layers }
 

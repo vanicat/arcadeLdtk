@@ -31,7 +31,7 @@ class LDtk:
         
         self.iid = dict["iid"]
         self.json_version = dict["jsonVersion"]
-        self.levels = [Level.from_json(self, path, l, self.defs) for l in dict["levels"]]
+        self.levels = [Level.from_json(self, path, l) for l in dict["levels"]]
         self.levels_by_iid = { l.iid: l for l in self.levels }
 
         self.world_grid_height = dict["worldGridHeight"]
