@@ -86,20 +86,37 @@ class TileSet:
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
+class EnumValue:
+    color: int # TODO: convert to arcade
+    id: str
+    tile_rect: TileRect
+    tile: Optional[arcade.Texture]
+
+    @classmethod
+    def from_json(cls, dict, defs):
+        return cls(
+            color=dict["color"],
+            id=dict["id"],
+            tile_rect=dict["tileRect"],
+            tile = defs.get_texture(dict["tileRect"]) if dict["tileRect"] else None
+        )
+
+
+@dataclass(slots=True, frozen=True, kw_only=True)
 class Enum:
     identifier: str
     tags: list[str]
     uid: int
-    values: list[str]
+    values: dict[str, EnumValue]
     path: Optional[str]
 
     @classmethod
-    def from_json(cls, dict:dict[str, Any]) -> Self:
+    def from_json(cls, dict:dict[str, Any], defs:"Defs") -> Self:
         new = cls(
             identifier = dict["identifier"],
             tags = dict["tags"],
             uid = dict["uid"],
-            values = [v["id"] for v in dict["values"]],
+            values = {v["id"]: EnumValue.from_json(v, defs) for v in dict["values"]},
             path = dict["externalRelPath"] if "externalRelPath" in dict else None
         )
         return new
@@ -167,12 +184,12 @@ class Defs:
             new.tilesets[tileset.identifier] = tileset
 
         for en in dict["enums"]:
-            enum = Enum.from_json(en)
+            enum = Enum.from_json(en, new)
             new.enums[enum.uid] = enum
             new.enums[enum.identifier] = enum
 
         for en in dict["externalEnums"]:
-            enum = Enum.from_json(en)
+            enum = Enum.from_json(en, new)
             new.enums[enum.uid] = enum
             new.enums[enum.identifier] = enum
 
