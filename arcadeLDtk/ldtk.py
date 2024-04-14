@@ -53,6 +53,10 @@ class LDtk:
         entity = layer.entity_by_iid[it["entityIid"]]
         return level, layer, entity
 
+    def get_levels_at_point(self, x:float, y:float) -> list[Level]:
+        """Return the levels at point, using word coordinate"""
+        return [level for level in self.levels if level.word_coord_inside(x, y)]
+
 
 def read_LDtk(path:str) -> LDtk:
     directory = os.path.dirname(path)
