@@ -22,13 +22,6 @@ class LDtk:
     world_layout: Optional[Literal["Free"] | Literal["GridVania"] | Literal["LinearHorizontal"] | Literal["LinearVertical"]]
     world: None
 
-
-    def get_entity(self, it:EntityRef) -> tuple[Level, LayerInstance, EntityInstance]:
-        level = self.levels_by_iid[it["levelIid"]]
-        layer = level.layers_by_iid[it["layerIid"]]
-        entity = layer.entity_by_iid[it["entityIid"]]
-        return level, layer, entity
-
     def __init__(self, path:str, dict:dict[str, Any]) -> None:
         self.bg_color = arcade.types.Color.from_hex_string(dict["bgColor"])
         self.defs = Defs(path, dict["defs"])
@@ -53,6 +46,12 @@ class LDtk:
         self.toc = {
             elem["identifier"]: elem for elem in dict["toc"]
         }
+
+    def get_entity(self, it:EntityRef) -> tuple[Level, LayerInstance, EntityInstance]:
+        level = self.levels_by_iid[it["levelIid"]]
+        layer = level.layers_by_iid[it["layerIid"]]
+        entity = layer.entity_by_iid[it["entityIid"]]
+        return level, layer, entity
 
 
 def read_LDtk(path:str) -> LDtk:
