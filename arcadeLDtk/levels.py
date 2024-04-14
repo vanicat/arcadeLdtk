@@ -10,6 +10,12 @@ if TYPE_CHECKING:
 from .defs import Defs, EntityDefinition, TileSet
 
 
+class HasDef:
+    @property
+    def defs(self) -> Defs:
+        return self.parent.defs
+
+
 class EntityRef(TypedDict):
     entityIid: str
     layerIid: str
@@ -18,7 +24,7 @@ class EntityRef(TypedDict):
 
 
 @dataclass(frozen=True, slots=True)
-class FieldInstance[T]:
+class FieldInstance[T](HasDef):
     parent: T
     identifier: str
     type: str
@@ -59,7 +65,7 @@ class FieldInstance[T]:
 
 
 @dataclass(slots=True)
-class EntityInstance:
+class EntityInstance(HasDef):
     #TODO: convert
     parent: "LayerInstance"
     identifier: str
@@ -107,7 +113,7 @@ class EntityInstance:
 
 
 @dataclass(slots=True, frozen=True)
-class TileInstance:
+class TileInstance(HasDef):
     parent: "LayerInstance"
     alpha: float
     flip_x: bool
@@ -127,7 +133,7 @@ class TileInstance:
 
 
 @dataclass(slots=True, kw_only=True)
-class LayerInstance:
+class LayerInstance(HasDef):
     parent: "Level"
     c_height: int
     """Grid-based height"""
@@ -262,7 +268,7 @@ px_total_offset_y which contains the total offset value)"""
 
 
 @dataclass(slots=True, kw_only=True)
-class Level:
+class Level(HasDef):
     parent: "LDtk"
     level:dict[str, Any]
     bg_color: arcade.types.Color
