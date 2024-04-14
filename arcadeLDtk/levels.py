@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Any, Callable, Literal, Optional, Self, TypedDict
 import os.path
 
@@ -16,35 +17,41 @@ class EntityRef(TypedDict):
     worldIid: str
 
 
-class FieldInstance:
+@dataclass(frozen=True, slots=True)
+class FieldInstance[T]:
+    parent: T
     identifier: str
     type: str
     value: Any
 
-    def __init__(self, dict:dict[str, Any], converter:Converter) -> None:
-        self.identifier = dict["__identifier"]
-        self.type = dict["__type"]
+    @classmethod
+    def from_json(cls, parent: T, dict:dict[str, Any], converter:Converter) -> Self:
+        identifier = dict["__identifier"]
+        type = dict["__type"]
         if dict["__value"] is None:
-            self.value = None
+            value = None
         else:
-            match self.type:
+            match type:
                 case "Color":
-                    self.value = arcade.types.Color.from_hex_string(dict["__value"])
+                    value = arcade.types.Color.from_hex_string(dict["__value"])
                 case "Point":
-                    self.value = converter(dict["__value"]["cx"], dict["__value"]["cy"])
+                    value = converter(dict["__value"]["cx"], dict["__value"]["cy"])
                 case "Array<Point>":
-                    self.value = [converter(pt["cx"], pt["cy"]) for pt in dict["__value"]]
+                    value = [converter(pt["cx"], pt["cy"]) for pt in dict["__value"]]
                 case _:
-                    self.value = dict["__value"]
+                    value = dict["__value"]
+
+        return cls(parent, identifier, type, value)
+
 
     def __str__(self) -> str:
         return f"FieldInstance:(id: {self.identifier}, type: {self.type}, value: {self.value!r})"
     
     @classmethod
-    def build_instance_dict(cls, di:dict, converter:Converter) -> dict[str, Self]:
+    def build_instance_dict(cls, parent:T, di:dict, converter:Converter) -> dict[str, Self]:
         fields:dict[str, Self] = {}
         for f in di:
-            fi = cls(f, converter)
+            fi = cls.from_json(parent, f, converter)
             if fi.identifier in fields:
                 raise ValueError(f"{fi.identifier} is set twice")
             fields[fi.identifier] = fi
@@ -63,7 +70,7 @@ class EntityInstance:
     "Reference of the Entity definition UID"
     tags: list[str]
     "Array of tags defined in this Entity definition"
-    fields: dict[str, FieldInstance]
+    fields: dict[str, FieldInstance[Self]]
     "An array of all custom fields and their values."
     iid: str
     "Unique instance identifier"
@@ -83,7 +90,7 @@ class EntityInstance:
         self.def_uid = dict["defUid"] 
         self.def_ = defs.entities[self.def_uid]
         self.tags = dict["__tags"]
-        self.fields = FieldInstance.build_instance_dict(dict["fieldInstances"], converter)
+        self.fields = FieldInstance.build_instance_dict(self, dict["fieldInstances"], converter)
         self.iid = dict["iid"]
         self.identifier = dict["__identifier"]
         self.world_x = dict["__worldX"] if "__worldX" in dict else None
@@ -246,7 +253,7 @@ class Level:
 
     bg_texture: Optional[arcade.Texture]
 
-    field_instances: dict[str,FieldInstance]
+    field_instances: dict[str,FieldInstance[Self]]
     layers: list[LayerInstance]
     layers_by_iid: dict[str, LayerInstance]
     layers_by_identifier: dict[str, LayerInstance]
@@ -287,7 +294,7 @@ class Level:
         else:
             self.bg_texture = arcade.load_texture(os.path.join(path, level["bgRelPath"]))
 
-        self.field_instances = FieldInstance.build_instance_dict(level["fieldInstances"], self.convert_coord)
+        self.field_instances = FieldInstance.build_instance_dict(self, level["fieldInstances"], self.convert_coord)
 
         self.identifier = level["identifier"]
         self.iid = level["iid"]
