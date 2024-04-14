@@ -106,7 +106,7 @@ class EntityInstance:
         return self
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, frozen=True)
 class TileInstance:
     parent: "LayerInstance"
     alpha: float
