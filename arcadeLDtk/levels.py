@@ -58,8 +58,10 @@ class FieldInstance[T]:
         return fields
 
 
+@dataclass(slots=True)
 class EntityInstance:
     #TODO: convert
+    parent: "LayerInstance"
     identifier: str
     "Entity definition identifier"
     grid: tuple[int, int]
@@ -85,19 +87,23 @@ class EntityInstance:
     width: int
     "Entity width in pixels. For non-resizable entities, it will be the same as Entity definition."
 
-    def __init__(self, dict:dict[str, Any], defs: "Defs", converter:Converter) -> None:
-        self.grid = (dict["__grid"][0], dict["__grid"][1])
-        self.def_uid = dict["defUid"] 
-        self.def_ = defs.entities[self.def_uid]
-        self.tags = dict["__tags"]
+    @classmethod
+    def from_json(cls, parent: "LayerInstance", dict:dict[str, Any], defs: "Defs", converter:Converter) -> Self:
+        grid = (dict["__grid"][0], dict["__grid"][1])
+        def_uid = dict["defUid"] 
+        def_ = defs.entities[def_uid]
+        tags = dict["__tags"]
+        iid = dict["iid"]
+        identifier = dict["__identifier"]
+        world_x = dict["__worldX"] if "__worldX" in dict else None
+        world_y = dict["__worldY"] if "__worldY" in dict else None
+        height = dict["height"]
+        width = dict["width"]
+        px = converter(dict["px"][0], dict["px"][1])
+
+        self = cls(parent, identifier, grid, def_uid, def_, tags, {}, iid, world_x, world_y, px, height, width)
         self.fields = FieldInstance.build_instance_dict(self, dict["fieldInstances"], converter)
-        self.iid = dict["iid"]
-        self.identifier = dict["__identifier"]
-        self.world_x = dict["__worldX"] if "__worldX" in dict else None
-        self.world_y = dict["__worldY"] if "__worldY" in dict else None
-        self.height = dict["height"]
-        self.width = dict["width"]
-        self.px = converter(dict["px"][0], dict["px"][1])
+        return self
 
 
 class TileInstance:
@@ -194,7 +200,7 @@ px_total_offset_y which contains the total offset value)"""
             self.grid_tiles = [TileInstance(t, self.tileset, converter) for t in dict["gridTiles"]]
 
         self.type = dict["__type"]
-        self.entity_list = [EntityInstance(e, defs, converter) for e in dict["entityInstances"]]
+        self.entity_list = [EntityInstance.from_json(self, e, defs, converter) for e in dict["entityInstances"]]
         self.entity_by_iid = { e.iid: e for e in self.entity_list }
         self.entity_by_identifier = {}
         for e in self.entity_list:
