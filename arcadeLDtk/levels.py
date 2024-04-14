@@ -305,6 +305,22 @@ class Level:
         return scene
     
     def convert_coord(self, x:float, y:float) -> tuple[float, float]:
-        """Convert coord to arcade convention
+        """Convert coord from or to arcade convention
         (0, 0) is at bottom left for aracade!"""
         return (x, (self.height - y))
+        
+    def to_world_coord(self, x:float, y:float) -> tuple[float, float]:
+        """Convert coord from arcade convention to world coordinate"""
+        x, y = self.convert_coord(x, y)
+        return (self.world_x + x, self.world_y + y)
+    
+    def from_world_coord(self, x:float, y:float) -> tuple[float, float]:
+        """Convert coord from arcade convention to world coordinate"""
+        return self.convert_coord(x - self.world_x, y - self.world_y)
+    
+    def word_coord_inside(self, x:float, y:float) -> bool:
+        return self.coord_inside(*self.from_world_coord(x, y))
+    
+    def coord_inside(self, x:float, y:float) -> bool:
+        return 0 <= x < self.height and 0 <= y < self.width
+    
