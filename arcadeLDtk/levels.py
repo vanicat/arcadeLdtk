@@ -1,7 +1,10 @@
 from typing import Any, Callable, Literal, Optional, Self, TypedDict
-import arcade
-from .defs import Defs, TileSet
 import os.path
+
+import arcade
+
+from .defs import Defs, EntityDefinition, TileSet
+
 
 Converter = Callable[[float, float], tuple[float, float]]
 
@@ -56,6 +59,8 @@ class EntityInstance:
     "Grid-based coordinates "
     def_uid: int
     "Reference of the Entity definition UID"
+    def_: EntityDefinition
+    "Reference of the Entity definition UID"
     tags: list[str]
     "Array of tags defined in this Entity definition"
     fields: dict[str, FieldInstance]
@@ -73,9 +78,10 @@ class EntityInstance:
     width: int
     "Entity width in pixels. For non-resizable entities, it will be the same as Entity definition."
 
-    def __init__(self, dict:dict[str, Any], converter:Converter) -> None:
+    def __init__(self, dict:dict[str, Any], defs: "Defs", converter:Converter) -> None:
         self.grid = (dict["__grid"][0], dict["__grid"][1])
         self.def_uid = dict["defUid"] 
+        self.def_ = defs.entities[self.def_uid]
         self.tags = dict["__tags"]
         self.fields = FieldInstance.build_instance_dict(dict["fieldInstances"], converter)
         self.iid = dict["iid"]
@@ -181,7 +187,7 @@ px_total_offset_y which contains the total offset value)"""
             self.grid_tiles = [TileInstance(t, self.tileset, converter) for t in dict["gridTiles"]]
 
         self.type = dict["__type"]
-        self.entity_list = [EntityInstance(e, converter) for e in dict["entityInstances"]]
+        self.entity_list = [EntityInstance(e, defs, converter) for e in dict["entityInstances"]]
         self.entity_by_iid = { e.iid: e for e in self.entity_list }
         self.entity_by_identifier = {}
         for e in self.entity_list:
