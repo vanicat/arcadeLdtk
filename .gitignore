@@ -1,3 +1,5 @@
 .vscode/*
 *.pyc
 venv/*
+arcadeLDtk.egg-info/*
+build/*
