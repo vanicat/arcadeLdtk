@@ -1,0 +1,18 @@
+[project]
+name = "arcadeLDtk"
+version = "0.0.1"
+authors = [
+  { name="Rémi Vanicat", email="vanicat@debian.org" },
+]
+description = "An interface for ldtk in python arcade"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/vanicat/arcadeLdtk"
+Issues = "https://github.com/vanicat/arcadeLdtk/issues"
