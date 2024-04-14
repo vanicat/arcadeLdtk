@@ -1,6 +1,7 @@
 
+from dataclasses import dataclass
 import os
-from typing import Any, Optional
+from typing import Any, Optional, Self
 from typing import TypedDict
 import arcade
 
@@ -26,6 +27,7 @@ class TileRect(TypedDict):
     w: int
 
 
+@dataclass(slots=True, frozen=True, kw_only=True)
 class TileSet:
     """Representation of a ldtk tileset"""
 
@@ -37,6 +39,8 @@ class TileSet:
     
     uid:int
     """Unique Intidentifier"""
+
+    tag_source_enum_uid: Optional[int]
 
     custom_data:dict[int, list[str]]
     """custom data for tile"""
@@ -50,27 +54,29 @@ class TileSet:
 
     path: str
 
-    def __init__(self, path:str, ts:dict[str, Any]) -> None:
-        self.path = os.path.join(path, ts["relPath"])
-
-        self.set = read_tilesets(self.path, ts)
-        self.tag_source_enum_uid = ts["tagsSourceEnumUid"]
-        self.uid = ts["uid"]
-
-        self.custom_data = {}
-        for data in ts["customData"]:
-            li = self.custom_data.setdefault(data["tileId"], [])
-            li.append(data["data"])
-
+    @classmethod
+    def from_json(cls, path:str, ts:dict[str, Any]) -> Self:
         if ts["embedAtlas"] is not None:
             raise NotImplementedError("embedAtlas is not implemented")
+        
+        path = os.path.join(path, ts["relPath"])
+        new = cls(
+            path = path,
+            set = read_tilesets(path, ts),
+            tag_source_enum_uid = ts["tagsSourceEnumUid"],
+            uid = ts["uid"],
+            custom_data = {},
+            source_enum_id = ts["tagsSourceEnumUid"],
+            enum_tag = { obj["enumValueId"]: obj["tileIds"] for obj in ts["enumTags"]},
+            identifier = ts["identifier"], # TODO: allow user to find tileset by identifier
+            tags = ts["tags"]
+        )
 
-        self.source_enum_id = ts["tagsSourceEnumUid"]
-        self.enum_tag = { obj["enumValueId"]: obj["tileIds"] for obj in ts["enumTags"]}       
+        for data in ts["customData"]:
+            li = new.custom_data.setdefault(data["tileId"], [])
+            li.append(data["data"])
 
-        self.identifier = ts["identifier"] # TODO: allow user to find tileset by identifier
-
-        self.tags = ts["tags"]
+        return new
 
     def __getitem__(self, id: int) -> arcade.Texture:
         return self.set[id]
@@ -143,7 +149,7 @@ class Defs:
             if "identifier" in ts and ts["identifier"] == 'Internal_Icons':
                 print("Internal_Icons are not implemeted")
                 continue
-            tileset = TileSet(path, ts)
+            tileset = TileSet.from_json(path, ts)
             self.tilesets[tileset.uid] = tileset
             self.tilesets[tileset.identifier] = tileset
 
