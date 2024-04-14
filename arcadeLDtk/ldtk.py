@@ -24,7 +24,7 @@ class LDtk:
 
     def __init__(self, path:str, dict:dict[str, Any]) -> None:
         self.bg_color = arcade.types.Color.from_hex_string(dict["bgColor"])
-        self.defs = Defs(path, dict["defs"])
+        self.defs = Defs.from_json(path, dict["defs"])
 
         if dict["externalLevels"]:
             raise NotImplementedError("external levels are not implemented")

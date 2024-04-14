@@ -85,6 +85,7 @@ class TileSet:
         return arcade.load_texture(self.path, x=rect["x"], y=rect["y"], width=rect["w"], height=rect["h"])
 
 
+@dataclass(slots=True, frozen=True, kw_only=True)
 class Enum:
     identifier: str
     tags: list[str]
@@ -92,17 +93,19 @@ class Enum:
     values: list[str]
     path: Optional[str]
 
-    def __init__(self, dict:dict[str, Any]) -> None:
-        self.identifier = dict["identifier"]
-        self.tags = dict["tags"]
-        self.uid = dict["uid"]
-        self.values = [v["id"] for v in dict["values"]]
-        if "externalRelPath" in dict:
-            self.path = dict["externalRelPath"]
-        else:
-            self.path = None
+    @classmethod
+    def from_json(cls, dict:dict[str, Any]) -> Self:
+        new = cls(
+            identifier = dict["identifier"],
+            tags = dict["tags"],
+            uid = dict["uid"],
+            values = [v["id"] for v in dict["values"]],
+            path = dict["externalRelPath"] if "externalRelPath" in dict else None
+        )
+        return new
 
 
+@dataclass(slots=True, frozen=True, kw_only=True)
 class EntityDefinition:
     uid: int
     identifier: str
@@ -119,23 +122,28 @@ class EntityDefinition:
     ui_tile_rect: Optional[TileRect]
     ui_tile: Optional[arcade.Texture]
 
-    def __init__(self, ts:dict[str, Any], defs:"Defs") -> None:
-        self.uid = ts["uid"]
-        self.identifier = ts["identifier"]
-        self.color = ts["color"]
-        self.height = ts["height"]
-        self.width = ts["width"]
-        self.nine_slice_borders = ts["nineSliceBorders"]
-        self.pivot_x = ts["pivotX"]
-        self.pivot_y = ts["pivotY"]
-        self.tileset_id = ts["tilesetId"] 
-        self.tile_rect = ts["tileRect"]
-        self.tile = defs.get_texture(self.tile_rect) if self.tile_rect else None
-        self.tile_render_mode = ts["tileRenderMode"]
-        self.ui_tile_rect = ts["uiTileRect"]
-        self.ui_tile = defs.get_texture(self.ui_tile_rect) if self.ui_tile_rect else None
+    @classmethod
+    def from_json(cls, ts:dict[str, Any], defs:"Defs") -> Self:
+        new = cls(
+            uid = ts["uid"],
+            identifier = ts["identifier"],
+            color = ts["color"],
+            height = ts["height"],
+            width = ts["width"],
+            nine_slice_borders = ts["nineSliceBorders"],
+            pivot_x = ts["pivotX"],
+            pivot_y = ts["pivotY"],
+            tileset_id = ts["tilesetId"],
+            tile_rect = ts["tileRect"],
+            tile = defs.get_texture(ts["tileRect"]) if ts["tileRect"] else None,
+            tile_render_mode = ts["tileRenderMode"],
+            ui_tile_rect = ts["uiTileRect"],
+            ui_tile = defs.get_texture(ts["uiTileRect"]) if ts["uiTileRect"] else None
+        )
+        return new
 
 
+@dataclass(slots=True, frozen=True, kw_only=True)
 class Defs:
     tilesets : dict[int|str, TileSet]
     """a dict from uid to tilesets"""
@@ -143,32 +151,37 @@ class Defs:
     """merge of enums and externalenums"""
     entities: dict[int|str, EntityDefinition]
 
-    def __init__(self, path:str, dict:dict[str, Any]) -> None:
-        self.tilesets = { }
+    @classmethod
+    def from_json(cls, path:str, dict:dict[str, Any]) -> Self:
+        new = cls(
+            tilesets = { },
+            enums = { },
+            entities = { }
+        )
         for ts in dict["tilesets"]:
             if "identifier" in ts and ts["identifier"] == 'Internal_Icons':
                 print("Internal_Icons are not implemeted")
                 continue
             tileset = TileSet.from_json(path, ts)
-            self.tilesets[tileset.uid] = tileset
-            self.tilesets[tileset.identifier] = tileset
+            new.tilesets[tileset.uid] = tileset
+            new.tilesets[tileset.identifier] = tileset
 
-        self.enums = {}
         for en in dict["enums"]:
-            enum = Enum(en)
-            self.enums[enum.uid] = enum
-            self.enums[enum.identifier] = enum
+            enum = Enum.from_json(en)
+            new.enums[enum.uid] = enum
+            new.enums[enum.identifier] = enum
 
         for en in dict["externalEnums"]:
-            enum = Enum(en)
-            self.enums[enum.uid] = enum
-            self.enums[enum.identifier] = enum
+            enum = Enum.from_json(en)
+            new.enums[enum.uid] = enum
+            new.enums[enum.identifier] = enum
 
-        self.entities = {}
         for ent in dict["entities"]:
-            entity = EntityDefinition(ent, self)
-            self.entities[entity.uid] = entity
-            self.entities[entity.identifier] = entity
+            entity = EntityDefinition.from_json(ent, new)
+            new.entities[entity.uid] = entity
+            new.entities[entity.identifier] = entity
+
+        return new
 
     def get_texture(self, rect:TileRect) -> Optional[arcade.Texture]:
         if rect["tilesetUid"] in self.tilesets:
