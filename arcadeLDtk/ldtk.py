@@ -55,7 +55,7 @@ class LDtk:
 
     def get_levels_at_point(self, x:float, y:float) -> list[Level]:
         """Return the levels at point, using word coordinate"""
-        return [level for level in self.levels if level.word_coord_inside(x, y)]
+        return [level for level in self.levels if level.contains_world_coord(x, y)]
 
 
 def read_LDtk(path:str) -> LDtk:

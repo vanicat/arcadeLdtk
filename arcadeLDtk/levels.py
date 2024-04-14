@@ -324,9 +324,9 @@ class Level:
         """Convert coord from arcade convention to world coordinate"""
         return self.convert_coord(x - self.world_x, y - self.world_y)
     
-    def word_coord_inside(self, x:float, y:float) -> bool:
-        return self.coord_inside(*self.from_world_coord(x, y))
+    def contains_world_coord(self, x:float, y:float) -> bool:
+        return self.contains_coord(*self.from_world_coord(x, y))
     
-    def coord_inside(self, x:float, y:float) -> bool:
-        return 0 <= x < self.height and 0 <= y < self.width
+    def contains_coord(self, x:float, y:float) -> bool:
+        return 0 <= x < self.width and 0 <= y < self.height
     
