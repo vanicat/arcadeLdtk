@@ -1,5 +1,6 @@
 
-from typing import Any, Literal, Optional
+from dataclasses import dataclass
+from typing import Any, Literal, Optional, Self
 import json
 import os.path
 
@@ -9,6 +10,7 @@ from .levels import LayerInstance, Level, EntityRef, EntityInstance
 from .defs import Defs
 
 
+@dataclass(slots=True, kw_only=True)
 class LDtk:
     bg_color: arcade.types.Color
     defs: Defs
@@ -18,34 +20,37 @@ class LDtk:
     levels_by_iid: dict[str, Level]
     toc: dict[str, Any] #TODO: typing
     world_grid_height: Optional[int]
-    world_grid_widtht: Optional[int]
+    world_grid_width: Optional[int]
     world_layout: Optional[Literal["Free"] | Literal["GridVania"] | Literal["LinearHorizontal"] | Literal["LinearVertical"]]
     world: None
 
-    def __init__(self, path:str, dict:dict[str, Any]) -> None:
-        self.bg_color = arcade.types.Color.from_hex_string(dict["bgColor"])
-        self.defs = Defs.from_json(path, dict["defs"])
-
+    @classmethod
+    def from_json(cls, path:str, dict:dict[str, Any]) -> Self:
         if dict["externalLevels"]:
             raise NotImplementedError("external levels are not implemented")
-        
-        self.iid = dict["iid"]
-        self.json_version = dict["jsonVersion"]
-        self.levels = [Level.from_json(self, path, l) for l in dict["levels"]]
-        self.levels_by_iid = { l.iid: l for l in self.levels }
-
-        self.world_grid_height = dict["worldGridHeight"]
-        self.world_grid_width = dict["worldGridWidth"]
-        self.world_layout = dict["worldLayout"]
-
         if dict["worlds"]:
             raise NotImplementedError("multi world is not implemented yet")
         
-        self.world = None
-        
-        self.toc = {
-            elem["identifier"]: elem for elem in dict["toc"]
-        }
+        new = cls(
+            bg_color = arcade.types.Color.from_hex_string(dict["bgColor"]),
+            defs = Defs.from_json(path, dict["defs"]),
+            iid = dict["iid"],
+            json_version = dict["jsonVersion"],
+            levels = [],
+            levels_by_iid = { },
+
+            world_grid_height = dict["worldGridHeight"],
+            world_grid_width = dict["worldGridWidth"],
+            world_layout = dict["worldLayout"],
+            
+            world = None,
+                toc = {
+                elem["identifier"]: elem for elem in dict["toc"]
+            }
+        )
+        new.levels = [Level.from_json(new, path, l) for l in dict["levels"]]
+        new.levels_by_iid = { l.iid: l for l in new.levels }
+        return new
 
     def get_entity(self, it:EntityRef) -> tuple[Level, LayerInstance, EntityInstance]:
         level = self.levels_by_iid[it["levelIid"]]
@@ -63,4 +68,4 @@ def read_LDtk(path:str) -> LDtk:
 
     with(open(path)) as f:
         dict = json.load(f)
-        return LDtk(directory, dict)
+        return LDtk.from_json(directory, dict)
