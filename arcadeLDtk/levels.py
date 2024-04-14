@@ -126,7 +126,9 @@ class TileInstance:
         return cls(parent, alpha, flip_x, flip_y, position, texture)
 
 
+@dataclass(slots=True, kw_only=True)
 class LayerInstance:
+    parent: "Level"
     c_height: int
     """Grid-based height"""
     c_width: int
@@ -183,43 +185,49 @@ px_total_offset_y which contains the total offset value)"""
 
     _sprite_list: Optional[arcade.SpriteList] = None
         
+    @classmethod
+    def from_json(cls, parent: "Level", dict:dict[str, Any], defs:Defs, converter:Converter) -> Self:
+        new:Self = cls(
+            parent = parent, 
+            c_height = dict["__cHei"], 
+            c_width = dict["__cWid"],
+            grid_size = dict["__gridSize"],
+            identifier = dict["__identifier"],
+            opacity = dict["__opacity"],
+            px_total_offset_x = dict["__pxTotalOffsetX"],
+            px_total_offset_y = -dict["__pxTotalOffsetY"],
+            tileset = None,
+            auto_layer_tiles = None,
+            grid_tiles = None,
+            type = dict["__type"],
+            entity_list = [],
+            entity_by_iid = {},
+            entity_by_identifier = {},
+            int_grid_csv = dict["intGridCsv"],
+            iid = dict["iid"],
+            layer_def_uid = dict["layerDefUid"],
+            level_id = dict["levelId"],
+            override_tileset_uid = dict["overrideTilesetUid"],
+            px_offset_x = dict["pxOffsetX"],
+            px_offset_y = -dict["pxOffsetY"],
+            visible = dict["visible"]
+        )
 
-    def __init__(self, dict:dict[str, Any], defs:Defs, converter:Converter) -> None:
-        self.c_height = dict["__cHei"]
-        self.c_width = dict["__cWid"]
-        self.grid_size = dict["__gridSize"]
-        self.identifier = dict["__identifier"]
-        self.opacity = dict["__opacity"]
-        self.px_total_offset_x = dict["__pxTotalOffsetX"]
-        self.px_total_offset_y = -dict["__pxTotalOffsetY"]
-        
         tileset_uid = dict["__tilesetDefUid"]
-        if tileset_uid is None:
-            self.tileset = None
-            self.auto_layer_tiles = None
-            self.grid_tiles = None
-        else:
-            self.tileset = defs.tilesets[tileset_uid]
-            self.auto_layer_tiles = [TileInstance.from_json(self, t, self.tileset, converter) for t in dict["autoLayerTiles"]]
-            self.grid_tiles = [TileInstance.from_json(self, t, self.tileset, converter) for t in dict["gridTiles"]]
+        if tileset_uid is not None:
+            new.tileset = defs.tilesets[tileset_uid]
+            new.auto_layer_tiles = [TileInstance.from_json(new, t, new.tileset, converter) for t in dict["autoLayerTiles"]]
+            new.grid_tiles = [TileInstance.from_json(new, t, new.tileset, converter) for t in dict["gridTiles"]]
 
-        self.type = dict["__type"]
-        self.entity_list = [EntityInstance.from_json(self, e, defs, converter) for e in dict["entityInstances"]]
-        self.entity_by_iid = { e.iid: e for e in self.entity_list }
-        self.entity_by_identifier = {}
-        for e in self.entity_list:
-            elem = self.entity_by_identifier.setdefault(e.identifier, [])
+        new.entity_list = [EntityInstance.from_json(new, e, defs, converter) for e in dict["entityInstances"]]
+        new.entity_by_iid = { e.iid: e for e in new.entity_list }
+
+        for e in new.entity_list:
+            elem = new.entity_by_identifier.setdefault(e.identifier, [])
             elem.append(e)
 
-        self.int_grid_csv = dict["intGridCsv"]
+        return new
 
-        self.iid = dict["iid"]
-        self.layer_def_uid = dict["layerDefUid"]
-        self.level_id = dict["levelId"]
-        self.override_tileset_uid = dict["overrideTilesetUid"]
-        self.px_offset_x = dict["pxOffsetX"]
-        self.px_offset_y = -dict["pxOffsetY"]
-        self.visible = dict["visible"]
 
     def has_tiles(self) -> bool:
         return self.auto_layer_tiles is not None or self.grid_tiles is not None
@@ -251,7 +259,6 @@ px_total_offset_y which contains the total offset value)"""
             self._sprite_list.append(sprite)
 
         return self._sprite_list
-        
 
 
 class Level:
@@ -310,7 +317,7 @@ class Level:
         self.iid = level["iid"]
         self.uid = level["uid"]
 
-        self.layers = [LayerInstance(l, defs, self.convert_coord) for l in level["layerInstances"]]
+        self.layers = [LayerInstance.from_json(self, l, defs, self.convert_coord) for l in level["layerInstances"]]
         self.layers_by_iid = { l.iid:l for l in self.layers }
         self.layers_by_identifier = { l.identifier:l for l in self.layers }
 
