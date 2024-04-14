@@ -106,20 +106,24 @@ class EntityInstance:
         return self
 
 
+@dataclass(slots=True)
 class TileInstance:
+    parent: "LayerInstance"
     alpha: float
     flip_x: bool
     flip_y: bool
     position: tuple[float, float]
     texture: arcade.Texture
 
-    def __init__(self, dict:dict[str, Any], texture:TileSet, converter:Converter) -> None:
-        self.alpha = dict["a"]
-        self.flip_x = dict["f"] == 1 or dict["f"] == 3
-        self.flip_y = dict["f"] == 2 or dict["f"] == 3
+    @classmethod
+    def from_json(cls, parent:"LayerInstance", dict:dict[str, Any], tileSet:TileSet, converter:Converter) -> Self:
+        alpha = dict["a"]
+        flip_x = dict["f"] & 1 != 0
+        flip_y = dict["f"] & 2 != 0
         x, y = converter(dict["px"][0], dict["px"][1])
-        self.position = (x, y)
-        self.texture = texture[dict["t"]]
+        position = (x, y)
+        texture = tileSet[dict["t"]]
+        return cls(parent, alpha, flip_x, flip_y, position, texture)
 
 
 class LayerInstance:
@@ -196,8 +200,8 @@ px_total_offset_y which contains the total offset value)"""
             self.grid_tiles = None
         else:
             self.tileset = defs.tilesets[tileset_uid]
-            self.auto_layer_tiles = [TileInstance(t, self.tileset, converter) for t in dict["autoLayerTiles"]]
-            self.grid_tiles = [TileInstance(t, self.tileset, converter) for t in dict["gridTiles"]]
+            self.auto_layer_tiles = [TileInstance.from_json(self, t, self.tileset, converter) for t in dict["autoLayerTiles"]]
+            self.grid_tiles = [TileInstance.from_json(self, t, self.tileset, converter) for t in dict["gridTiles"]]
 
         self.type = dict["__type"]
         self.entity_list = [EntityInstance.from_json(self, e, defs, converter) for e in dict["entityInstances"]]
