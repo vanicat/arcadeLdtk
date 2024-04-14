@@ -1,8 +1,11 @@
 from dataclasses import dataclass
-from typing import Any, Callable, Literal, Optional, Self, TypedDict
+from typing import TYPE_CHECKING, Any, Callable, Literal, Optional, Self, TypedDict
 import os.path
 
 import arcade
+
+if TYPE_CHECKING:
+    from . import LDtk
 
 from .defs import Defs, EntityDefinition, TileSet
 
@@ -261,7 +264,10 @@ px_total_offset_y which contains the total offset value)"""
         return self._sprite_list
 
 
+@dataclass(slots=True, kw_only=True)
 class Level:
+    parent: "LDtk"
+    level:dict[str, Any]
     bg_color: arcade.types.Color
     
     bg_pos: Optional[dict[str, Any]]
@@ -285,46 +291,47 @@ class Level:
     world_x: int
     world_y: int
 
-    def __init__(self, path:str, level:dict, defs:Defs) -> None:
-        self.level = level
-
-        # set height and width first to be able to convert in init
-        self.height = level["pxHei"]
-        self.width = level["pxWid"]
-
+    @classmethod
+    def from_json(cls, parent: "LDtk", path:str, level:dict[str, Any], defs:Defs) -> Self:
         if level["externalRelPath"] is not None:
             raise NotImplementedError("Save level separately is not implemeted")
         
-        self.bg_color = arcade.types.Color.from_hex_string(level["__bgColor"])
-
-        if level["__bgPos"] is None:
-            self.bg_pos = None
-        else:
-            self.bg_pos = level["__bgPos"]
+        new = cls(
+            parent = parent,
+            level = level,
+            # set height and width first to be able to convert in init
+            height = level["pxHei"],
+            width = level["pxWid"],
+            bg_color = arcade.types.Color.from_hex_string(level["__bgColor"]),
+            bg_pos = level["__bgPos"],
             # crop_x, crop_y, crop_width, crop_height = level["__bgPos"]["cropRect"]
             # scale_x, scale_y = level["__bgPos"]["scale"]
-            topLeft_x, topLeft_y = level["__bgPos"]["topLeftPx"]
-            self.bg_pos["topLeftPx"] =  self.convert_coord(topLeft_x, topLeft_y)
-         
-        if level["bgRelPath"] is None:
-            self.bg_texture = None
-        else:
-            self.bg_texture = arcade.load_texture(os.path.join(path, level["bgRelPath"]))
+            bg_texture = arcade.load_texture(os.path.join(path, level["bgRelPath"])) if level["bgRelPath"] is not None else None,
+            field_instances = {},
+            identifier = level["identifier"],
+            iid = level["iid"],
+            uid = level["uid"],
+            layers = [], layers_by_iid = {}, layers_by_identifier = {},
+            world_depth = level["worldDepth"],
+            # TODO: convert here ?
+            world_x = level["worldX"],
+            world_y = level["worldY"]
+        ) 
+     
 
-        self.field_instances = FieldInstance.build_instance_dict(self, level["fieldInstances"], self.convert_coord)
+        new.field_instances = FieldInstance.build_instance_dict(new, level["fieldInstances"], new.convert_coord)
 
-        self.identifier = level["identifier"]
-        self.iid = level["iid"]
-        self.uid = level["uid"]
+        new.layers = [LayerInstance.from_json(new, l, defs, new.convert_coord) for l in level["layerInstances"]]
+        new.layers_by_iid = { l.iid:l for l in new.layers }
+        new.layers_by_identifier = { l.identifier:l for l in new.layers }
 
-        self.layers = [LayerInstance.from_json(self, l, defs, self.convert_coord) for l in level["layerInstances"]]
-        self.layers_by_iid = { l.iid:l for l in self.layers }
-        self.layers_by_identifier = { l.identifier:l for l in self.layers }
+        
+        if new.bg_pos:
+            new.bg_pos["topLeftPx"] =  new.convert_coord(*new.bg_pos["topLeftPx"])
 
-        # TODO: convert here ?
-        self.world_depth = level["worldDepth"]
-        self.world_x = level["worldX"]
-        self.world_y = level["worldY"]
+        return new
+
+
 
     def make_scene(self, regenerate=False) -> arcade.Scene:
         scene = arcade.Scene()
