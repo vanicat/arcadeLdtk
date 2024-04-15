@@ -13,7 +13,7 @@ from .defs import Defs, EntityDefinition, TileSet
 class HasDef:
     @property
     def defs(self) -> Defs:
-        return self.parent.defs
+        return self.parent.defs # type: ignore
 
 
 class EntityRef(TypedDict):
