@@ -41,9 +41,11 @@ class FieldInstance[T](HasDef):
                 case "Color":
                     value = arcade.types.Color.from_hex_string(dict["__value"])
                 case "Point":
-                    value = level.convert_coord(dict["__value"]["cx"], dict["__value"]["cy"])
+                    assert isinstance(parent, EntityInstance)
+                    value = level.convert_coord_grid(dict["__value"]["cx"], dict["__value"]["cy"], parent.parent.grid_size)
                 case "Array<Point>":
-                    value = [level.contains_coord(pt["cx"], pt["cy"]) for pt in dict["__value"]]
+                    assert isinstance(parent, EntityInstance)
+                    value = [level.convert_coord_grid(pt["cx"], pt["cy"], parent.parent.grid_size) for pt in dict["__value"]]
                 case _:
                     value = dict["__value"]
 
@@ -347,7 +349,12 @@ class Level(HasDef):
     def convert_coord(self, x:float, y:float) -> tuple[float, float]:
         """Convert coord from or to arcade convention
         (0, 0) is at bottom left for aracade!"""
-        return (x, (self.height - y))
+        return (x, (self.height - y)) 
+   
+    def convert_coord_grid(self, x:float, y:float, grid_size:float) -> tuple[float, float]:
+        """Convert coord from or to arcade convention
+        (0, 0) is at bottom left for aracade!"""
+        return (x * grid_size, (self.height - y + grid_size))
         
     def to_world_coord(self, x:float, y:float) -> tuple[float, float]:
         """Convert coord from arcade convention to world coordinate"""
