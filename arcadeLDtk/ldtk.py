@@ -23,6 +23,7 @@ class LDtk:
     world_grid_width: Optional[int]
     world_layout: Optional[Literal["Free"] | Literal["GridVania"] | Literal["LinearHorizontal"] | Literal["LinearVertical"]]
     world: None
+    default_grid_size: int
 
     @classmethod
     def from_json(cls, path:str, dict:dict[str, Any]) -> Self:
@@ -46,7 +47,8 @@ class LDtk:
             world = None,
                 toc = {
                 elem["identifier"]: elem for elem in dict["toc"]
-            }
+            },
+            default_grid_size = dict["defaultGridSize"]
         )
         new.levels = [Level.from_json(new, path, l) for l in dict["levels"]]
         new.levels_by_iid = { l.iid: l for l in new.levels }
