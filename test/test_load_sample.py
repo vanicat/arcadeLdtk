@@ -32,8 +32,10 @@ def test_many_features():
     assert isinstance(example.levels[0], Level)
     fst_level = example.levels[0]
     assert fst_level.identifier == "Everything"
+    assert isinstance(fst_level.defs, arcadeLDtk.Defs)
     scene = fst_level.make_scene()
     for layer in fst_level.layers:
+        assert isinstance(layer.defs, arcadeLDtk.Defs)
         match layer.identifier:
             case "Entities":
                 assert layer.type == "Entities"
@@ -41,10 +43,14 @@ def test_many_features():
                 assert layer.grid_tiles is None
                 assert layer.int_grid_csv == []
                 for instance in layer.entity_list:
+                    assert isinstance(instance.defs, arcadeLDtk.Defs)
                     if "target" in instance.fields:
                         target = instance.fields["target"]
                         assert isinstance(target.value, dict)
-                        example.get_entity(target.value) # type: ignore
+                        lev, lay, ent = example.get_entity(target.value) # type: ignore
+                        assert isinstance(lev, arcadeLDtk.Level)
+                        assert isinstance(lay, arcadeLDtk.LayerInstance)
+                        assert isinstance(ent, arcadeLDtk.EntityInstance)
 
             case "IntGrid_8px_grid":
                 assert layer.type == "IntGrid"
