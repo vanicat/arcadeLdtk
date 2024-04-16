@@ -354,7 +354,7 @@ class Level(HasDef):
     def convert_coord_grid(self, x:float, y:float, grid_size:float) -> tuple[float, float]:
         """Convert coord from or to arcade convention
         (0, 0) is at bottom left for aracade!"""
-        return (x * grid_size, (self.height - y + grid_size))
+        return (x * grid_size + grid_size / 2, (self.height - y * grid_size) - grid_size / 2)
         
     def to_world_coord(self, x:float, y:float) -> tuple[float, float]:
         """Convert coord from arcade convention to world coordinate"""
