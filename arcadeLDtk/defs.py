@@ -32,6 +32,8 @@ class TileRect(TypedDict):
     w: int
 
 
+# TODO: This might be a reimplemetation of arcade.SpriteSheet
+# I Should check if one can drop it, or use arcade.SpriteSheet more
 @dataclass(slots=True, frozen=True, kw_only=True)
 class TileSet:
     """Representation of a ldtk tileset"""
