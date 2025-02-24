@@ -6,17 +6,22 @@ from typing import TypedDict
 import arcade
 
 
+# TODO: may be, return the SpriteSheet for use by user ?
 def read_tilesets(sheet_path:str, tileset:dict) -> list[arcade.Texture]:
+    """Read a tileset using arcade, from Ldtk tileset description"""
     assert tileset["relPath"], "tileset has no path"
     
-    c_hei = tileset["__cHei"]
-    c_wid = tileset["__cWid"]
-    nb = c_hei * c_wid
-    size = tileset["tileGridSize"]
+    c_hei:int = tileset["__cHei"]
+    c_wid:int = tileset["__cWid"]
+    nb:int = c_hei * c_wid
+    size:int = tileset["tileGridSize"]
+    margin:int = tileset["spacing"]
     if tileset["padding"] > 0:
         raise NotImplementedError("padding in tileset is not implemeted")
     
-    return arcade.load_spritesheet(sheet_path, size, size, c_wid, nb, margin=tileset["spacing"])
+    spritesheet: arcade.SpriteSheet = arcade.load_spritesheet(sheet_path)
+    
+    return spritesheet.get_texture_grid((size, size), c_wid, nb, (margin, margin, margin, margin))
 
 
 class TileRect(TypedDict):
