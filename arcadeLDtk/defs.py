@@ -27,6 +27,9 @@ class TileRect(TypedDict):
     h: int
     w: int
 
+def tile_rect_to_rect(t:TileRect) -> arcade.Rect:
+    return arcade.XYWH(t["x"], t["y"], t["w"], t["h"])
+
 
 # TODO: This might be a reimplemetation of arcade.SpriteSheet
 # I Should check if one can drop it, or use arcade.SpriteSheet more
@@ -90,7 +93,7 @@ class TileSet:
         return self.set[id]
     
     def get_texture(self, rect:TileRect) -> arcade.Texture:
-        return arcade.load_texture(self.path, x=rect["x"], y=rect["y"], width=rect["w"], height=rect["h"])
+        return self.sprite_sheet.get_texture(tile_rect_to_rect(rect))
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
