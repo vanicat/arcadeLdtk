@@ -6,10 +6,8 @@ from typing import TypedDict
 import arcade
 
 
-# TODO: may be, return the SpriteSheet for use by user ?
-def read_tilesets(sheet_path:str, tileset:dict) -> list[arcade.Texture]:
-    """Read a tileset using arcade, from Ldtk tileset description"""
-    assert tileset["relPath"], "tileset has no path"
+def get_grid(spritesheet: arcade.SpriteSheet, tileset:dict) -> list[arcade.Texture]:
+    """get the texture grid from a spritesheet, using information from the """
     
     c_hei:int = tileset["__cHei"]
     c_wid:int = tileset["__cWid"]
@@ -18,9 +16,7 @@ def read_tilesets(sheet_path:str, tileset:dict) -> list[arcade.Texture]:
     margin:int = tileset["spacing"]
     if tileset["padding"] > 0:
         raise NotImplementedError("padding in tileset is not implemeted")
-    
-    spritesheet: arcade.SpriteSheet = arcade.load_spritesheet(sheet_path)
-    
+        
     return spritesheet.get_texture_grid((size, size), c_wid, nb, (margin, margin, margin, margin))
 
 
@@ -37,6 +33,9 @@ class TileRect(TypedDict):
 @dataclass(slots=True, frozen=True, kw_only=True)
 class TileSet:
     """Representation of a ldtk tileset"""
+
+    sprite_sheet:arcade.SpriteSheet
+    """the spritesheet containing all tile"""
 
     set:list[arcade.Texture]
     """the list of texture read from the tileset"""
@@ -67,9 +66,11 @@ class TileSet:
             raise NotImplementedError("embedAtlas is not implemented")
         
         path = os.path.join(path, ts["relPath"])
+        tilesheet: arcade.SpriteSheet = arcade.load_spritesheet(path)
         new = cls(
             path = path,
-            set = read_tilesets(path, ts),
+            sprite_sheet = tilesheet,
+            set = get_grid(tilesheet, ts),
             tag_source_enum_uid = ts["tagsSourceEnumUid"],
             uid = ts["uid"],
             custom_data = {},
