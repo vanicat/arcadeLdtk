@@ -27,12 +27,11 @@ class TileRect(TypedDict):
     h: int
     w: int
 
+
 def tile_rect_to_rect(t:TileRect) -> arcade.Rect:
     return arcade.XYWH(t["x"], t["y"], t["w"], t["h"])
 
 
-# TODO: This might be a reimplemetation of arcade.SpriteSheet
-# I Should check if one can drop it, or use arcade.SpriteSheet more
 @dataclass(slots=True, frozen=True, kw_only=True)
 class TileSet:
     """Representation of a ldtk tileset"""
